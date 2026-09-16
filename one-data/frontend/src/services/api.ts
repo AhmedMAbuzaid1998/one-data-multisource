@@ -52,3 +52,18 @@ export async function fetchStats(): Promise<{ total: number }> {
   if (!res.ok) throw new Error(`Stats failed: ${res.status}`)
   return res.json()
 }
+
+export async function importUsers(file: File): Promise<TestUser[]> {
+  const body = new FormData()
+  body.append('file', file)
+  const res = await fetch(`${BASE}/users/import`, { method: 'POST', body })
+  if (!res.ok) {
+    const contentType = res.headers.get('content-type') || ''
+    if (contentType.includes('application/json')) {
+      const error = await res.json().catch(() => null)
+      if (error?.message) throw new Error(error.message)
+    }
+    throw new Error(`The workbook could not be imported (HTTP ${res.status}). Check that the backend is running, then try again.`)
+  }
+  return res.json()
+}

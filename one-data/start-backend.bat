@@ -4,9 +4,6 @@ echo   One Data - Backend
 echo   Spring Boot on :8080
 echo ================================
 
-set JAVA_HOME=C:\Users\Ahmed Abuzaid\AppData\Local\Programs\Eclipse Adoptium\jdk-17.0.19.10-hotspot
-set PATH=%JAVA_HOME%\bin;%PATH%
-
 echo Java version:
 java -version
 

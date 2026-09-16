@@ -26,10 +26,10 @@ export default function TokenButton({ userId, username }: Props) {
 
   if (state === 'done') {
     return (
-      <div style={styles.tokenResult} title={`Token for ${username}`}>
-        <span style={styles.checkIcon}>✓</span>
-        <span style={styles.tokenText}>{token}</span>
-        <button style={styles.copyBtn} onClick={() => navigator.clipboard.writeText(token)} title="Copy token">
+      <div id={`token-result-${userId}`} style={styles.tokenResult} title={`Token for ${username}`}>
+        <span id={`token-check-${userId}`} style={styles.checkIcon}>✓</span>
+        <span id={`token-value-${userId}`} style={styles.tokenText}>{token}</span>
+        <button id={`token-copy-${userId}`} style={styles.copyBtn} onClick={() => navigator.clipboard.writeText(token)} title="Copy token">
           ⎘
         </button>
       </div>
@@ -38,6 +38,7 @@ export default function TokenButton({ userId, username }: Props) {
 
   return (
     <button
+      id={`token-generate-${userId}`}
       style={{
         ...styles.btn,
         ...(state === 'loading' ? styles.btnLoading : {}),
@@ -46,7 +47,7 @@ export default function TokenButton({ userId, username }: Props) {
       onClick={handleClick}
       disabled={state === 'loading'}
     >
-      {state === 'loading' && <span style={styles.spinner}>⟳</span>}
+      {state === 'loading' && <span id={`token-spinner-${userId}`} style={styles.spinner}>⟳</span>}
       {state === 'idle'    && '⚡ Generate'}
       {state === 'loading' && 'Running…'}
       {state === 'error'   && '✕ Failed'}
@@ -58,14 +59,14 @@ const styles: Record<string, React.CSSProperties> = {
   btn: {
     fontSize: 12, padding: '5px 12px',
     borderRadius: 6,
-    border: '1px solid #d1d5db',
-    background: '#fff', color: '#374151',
+    border: '1px solid var(--border)',
+    background: 'var(--surface)', color: 'var(--text)',
     display: 'flex', alignItems: 'center', gap: 4,
     transition: 'all 0.15s', whiteSpace: 'nowrap',
   },
   btnLoading: {
-    background: '#f9fafb', color: '#9ca3af',
-    borderColor: '#e5e7eb',
+    background: 'var(--soft)', color: 'var(--muted)',
+    borderColor: 'var(--border)',
   },
   btnError: {
     background: '#fef2f2', color: '#dc2626',
@@ -83,14 +84,14 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#059669', fontWeight: 700, fontSize: 13,
   },
   tokenText: {
-    fontFamily: 'monospace', color: '#065f46',
+    fontFamily: 'monospace', color: 'var(--success)',
     fontSize: 11, maxWidth: 140,
     overflow: 'hidden', textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
   },
   copyBtn: {
     background: 'none', border: 'none',
-    color: '#9ca3af', cursor: 'pointer',
+    color: 'var(--muted)', cursor: 'pointer',
     fontSize: 14, padding: '0 2px',
   },
 }

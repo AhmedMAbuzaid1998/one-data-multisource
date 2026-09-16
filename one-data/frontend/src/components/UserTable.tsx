@@ -1,139 +1,58 @@
+import { useEffect, useMemo, useState } from 'react'
 import { TestUser } from '../services/api'
 import TokenButton from './TokenButton'
 
-interface Props {
-  users: TestUser[]
-  loading: boolean
-  error: string
+interface Props { users: TestUser[]; loading: boolean; error: string; tokenEnabled?: boolean }
+type SortKey = keyof Pick<TestUser, 'username' | 'market' | 'environment' | 'userType' | 'role' | 'paymentType' | 'accountId' | 'serviceId'>
+const PAGE_SIZES = [10, 25, 50]
+// Keep the token UI available in code for a later release.
+const SHOW_TOKEN_GENERATION = false
+const COLUMNS: Array<{ key: SortKey; label: string }> = [
+  { key: 'username', label: 'Username' }, { key: 'market', label: 'Market' },
+  { key: 'environment', label: 'Environment' }, { key: 'userType', label: 'User type' },
+  { key: 'role', label: 'Role' }, { key: 'paymentType', label: 'Payment' },
+  { key: 'accountId', label: 'Account ID' }, { key: 'serviceId', label: 'Service ID' },
+]
+
+function Badge({ id, text, kind }: { id: string; text: string; kind: string }) {
+  return <span id={id} className={`data-badge ${kind}-${text.toLowerCase().replace(/ /g, '-')}`}>{text}</span>
 }
 
-const marketColors: Record<string, { bg: string; color: string }> = {
-  IE: { bg: '#dbeafe', color: '#1d4ed8' },
-  AL: { bg: '#dcfce7', color: '#166534' },
-  PT: { bg: '#ede9fe', color: '#6d28d9' },
-}
-const envColors: Record<string, { bg: string; color: string }> = {
-  QA:    { bg: '#d1fae5', color: '#065f46' },
-  STAGE: { bg: '#fef3c7', color: '#92400e' },
-  PROD:  { bg: '#fee2e2', color: '#991b1b' },
-}
-const typeColors: Record<string, { bg: string; color: string }> = {
-  Consumer: { bg: '#fce7f3', color: '#9d174d' },
-  Business: { bg: '#f1f5f9', color: '#475569' },
-}
-const payColors: Record<string, { bg: string; color: string }> = {
-  'Post Paid':  { bg: '#d1fae5', color: '#065f46' },
-  'Pre Paid':   { bg: '#dbeafe', color: '#1e3a8a' },
-  'Converged':  { bg: '#ede9fe', color: '#6b21a8' },
-}
+export default function UserTable({ users, loading, error, tokenEnabled = true }: Props) {
+  const [sortKey, setSortKey] = useState<SortKey>('username')
+  const [direction, setDirection] = useState<'asc' | 'desc'>('asc')
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const sorted = useMemo(() => [...users].sort((a, b) => {
+    const result = String(a[sortKey]).localeCompare(String(b[sortKey]), undefined, { numeric: true })
+    return direction === 'asc' ? result : -result
+  }), [users, sortKey, direction])
+  const pageCount = Math.max(1, Math.ceil(sorted.length / pageSize))
+  const visible = sorted.slice((page - 1) * pageSize, page * pageSize)
+  useEffect(() => setPage(1), [users, pageSize])
 
-function Badge({ text, colorMap }: { text: string; colorMap: Record<string, { bg: string; color: string }> }) {
-  const c = colorMap[text] || { bg: '#f3f4f6', color: '#374151' }
-  return (
-    <span style={{
-      background: c.bg, color: c.color,
-      padding: '2px 9px', borderRadius: 20,
-      fontSize: 11, fontWeight: 500, whiteSpace: 'nowrap',
-    }}>
-      {text}
-    </span>
-  )
-}
-
-export default function UserTable({ users, loading, error }: Props) {
-  if (error) {
-    return (
-      <div style={styles.stateBox}>
-        <div style={styles.errorIcon}>⚠️</div>
-        <p style={styles.errorText}>Cannot reach backend</p>
-        <p style={styles.errorSub}>Make sure Spring Boot is running on port 8080</p>
-      </div>
-    )
+  function sortBy(key: SortKey) {
+    if (sortKey === key) setDirection(current => current === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(key); setDirection('asc') }
+    setPage(1)
   }
 
-  if (loading) {
-    return (
-      <div style={styles.stateBox}>
-        <div style={styles.loadingSpinner}>⟳</div>
-        <p style={{ color: '#9ca3af', fontSize: 13 }}>Loading users…</p>
-      </div>
-    )
-  }
+  if (error) return <div id="table-error" className="table-state"><span id="table-error-icon" className="state-icon">!</span><h3 id="table-error-title">We couldn't load the data</h3><p id="table-error-description">Check the backend connection, then try Refresh.</p></div>
+  if (loading) return <div id="table-loading" className="table-state"><span id="table-loading-spinner" className="table-spinner" /><h3 id="table-loading-title">Loading test users</h3><p id="table-loading-description">This should only take a moment.</p></div>
+  if (!users.length) return <div id="table-empty" className="table-state"><span id="table-empty-icon" className="state-icon">⌕</span><h3 id="table-empty-title">No matching users</h3><p id="table-empty-description">Remove a filter or try a different search.</p></div>
 
-  if (users.length === 0) {
-    return (
-      <div style={styles.stateBox}>
-        <div style={{ fontSize: 36, marginBottom: 8 }}>🔍</div>
-        <p style={{ color: '#374151', fontWeight: 500 }}>No users found</p>
-        <p style={{ color: '#9ca3af', fontSize: 12, marginTop: 4 }}>Try adjusting your filters</p>
-      </div>
-    )
-  }
-
-  return (
-    <div style={styles.tableWrap}>
-      <div style={{ overflowX: 'auto' }}>
-        <table style={styles.table}>
-          <thead>
-            <tr style={styles.thead}>
-              <th style={styles.th}>Username</th>
-              <th style={styles.th}>Market</th>
-              <th style={styles.th}>Environment</th>
-              <th style={styles.th}>User Type</th>
-              <th style={styles.th}>Role</th>
-              <th style={styles.th}>Payment</th>
-              <th style={styles.th}>Account ID</th>
-              <th style={styles.th}>Service ID</th>
-              <th style={styles.th}>Token</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(user => (
-              <tr key={user.id} style={styles.tr}>
-                <td style={{ ...styles.td, fontFamily: 'monospace', fontSize: 12 }}>{user.username}</td>
-                <td style={styles.td}><Badge text={user.market} colorMap={marketColors} /></td>
-                <td style={styles.td}><Badge text={user.environment} colorMap={envColors} /></td>
-                <td style={styles.td}><Badge text={user.userType} colorMap={typeColors} /></td>
-                <td style={{ ...styles.td, color: user.role === 'N/A' ? '#d1d5db' : '#374151', fontSize: 12 }}>
-                  {user.role}
-                </td>
-                <td style={styles.td}><Badge text={user.paymentType} colorMap={payColors} /></td>
-                <td style={{ ...styles.td, fontFamily: 'monospace', fontSize: 12 }}>{user.accountId}</td>
-                <td style={{ ...styles.td, fontFamily: 'monospace', fontSize: 12 }}>{user.serviceId}</td>
-                <td style={styles.td}>
-                  <TokenButton userId={user.id} username={user.username} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-const styles: Record<string, React.CSSProperties> = {
-  tableWrap: { flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' },
-  table:     { width: '100%', borderCollapse: 'collapse', fontSize: 13 },
-  thead:     { background: '#f9fafb', position: 'sticky', top: 0, zIndex: 1 },
-  th: {
-    padding: '10px 14px', textAlign: 'left',
-    fontSize: 11, fontWeight: 600, color: '#6b7280',
-    textTransform: 'uppercase', letterSpacing: '0.5px',
-    borderBottom: '1px solid #e5e7eb', whiteSpace: 'nowrap',
-  },
-  tr: { borderBottom: '1px solid #f3f4f6', transition: 'background 0.1s' },
-  td: { padding: '11px 14px', verticalAlign: 'middle' },
-  stateBox: {
-    flex: 1, display: 'flex', flexDirection: 'column',
-    alignItems: 'center', justifyContent: 'center',
-    padding: 60, color: '#6b7280',
-  },
-  errorIcon:    { fontSize: 36, marginBottom: 12 },
-  errorText:    { fontSize: 15, fontWeight: 500, color: '#dc2626', marginBottom: 4 },
-  errorSub:     { fontSize: 12, color: '#9ca3af' },
-  loadingSpinner: {
-    fontSize: 32, color: '#E60000', marginBottom: 12,
-    animation: 'spin 1s linear infinite',
-  },
+  const start = (page - 1) * pageSize + 1
+  const end = Math.min(page * pageSize, sorted.length)
+  return <>
+    <div id="table-scroll" className="table-scroll"><table id="user-table" className="user-table">
+      <thead id="user-table-head"><tr id="user-table-header-row">{COLUMNS.map(column => <th id={`user-table-header-${column.key}`} key={column.key} aria-sort={sortKey === column.key ? (direction === 'asc' ? 'ascending' : 'descending') : 'none'}><button id={`user-table-sort-${column.key}`} type="button" onClick={() => sortBy(column.key)}>{column.label}<span id={`user-table-sort-icon-${column.key}`} className="sort-icon" aria-hidden="true">{sortKey === column.key ? (direction === 'asc' ? '↑' : '↓') : '↕'}</span></button></th>)}{SHOW_TOKEN_GENERATION && <th id="user-table-header-token"><span id="user-table-token-label" className="token-heading">Token</span></th>}</tr></thead>
+      <tbody id="user-table-body">{visible.map(user => <tr id={`user-row-${user.id}`} key={user.id}>
+        <td id={`user-${user.id}-username-cell`}><div id={`user-${user.id}-username`} className="primary-cell"><span id={`user-${user.id}-avatar`} className="user-avatar">{user.username.slice(0, 2).toUpperCase()}</span><span id={`user-${user.id}-username-value`}>{user.username}</span></div></td>
+        <td id={`user-${user.id}-market-cell`}><Badge id={`user-${user.id}-market`} text={user.market} kind="market" /></td><td id={`user-${user.id}-environment-cell`}><Badge id={`user-${user.id}-environment`} text={user.environment} kind="environment" /></td><td id={`user-${user.id}-type-cell`}><Badge id={`user-${user.id}-type`} text={user.userType} kind="type" /></td>
+        <td id={`user-${user.id}-role`} className={user.role === 'N/A' ? 'muted-cell' : ''}>{user.role}</td><td id={`user-${user.id}-payment-cell`}><Badge id={`user-${user.id}-payment`} text={user.paymentType} kind="payment" /></td>
+        <td id={`user-${user.id}-account`} className="mono-cell">{user.accountId}</td><td id={`user-${user.id}-service`} className="mono-cell">{user.serviceId}</td>{SHOW_TOKEN_GENERATION && <td id={`user-${user.id}-token-cell`}>{tokenEnabled ? <TokenButton userId={user.id} username={user.username} /> : <span id={`token-personal-${user.id}`} className="personal-token-note" title="Token generation is only available for the main dataset">Main data only</span>}</td>}
+      </tr>)}</tbody>
+    </table></div>
+    <div id="table-footer" className="table-footer"><span id="table-range">Showing <strong id="table-range-visible">{start}–{end}</strong> of <strong id="table-range-total">{sorted.length}</strong></span><div id="page-controls" className="page-controls"><label id="page-size-label" htmlFor="page-size">Rows <select id="page-size" value={pageSize} onChange={e => setPageSize(Number(e.target.value))}>{PAGE_SIZES.map(size => <option id={`page-size-${size}`} key={size}>{size}</option>)}</select></label><button id="page-previous" type="button" onClick={() => setPage(p => p - 1)} disabled={page === 1} aria-label="Previous page">←</button><span id="page-indicator">{page} / {pageCount}</span><button id="page-next" type="button" onClick={() => setPage(p => p + 1)} disabled={page === pageCount} aria-label="Next page">→</button></div></div>
+  </>
 }

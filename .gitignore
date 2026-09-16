@@ -1,0 +1,4 @@
+/.idea/
+/outputs/
+/target/
+**/vite.config.ts.timestamp-*.mjs
