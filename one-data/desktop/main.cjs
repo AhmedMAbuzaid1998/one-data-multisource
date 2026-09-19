@@ -2,6 +2,7 @@ const { app, BrowserWindow, dialog, session } = require('electron')
 const { spawn } = require('node:child_process')
 const { randomBytes } = require('node:crypto')
 const fs = require('node:fs')
+const http = require('node:http')
 const path = require('node:path')
 
 let backend
@@ -36,6 +37,8 @@ async function start() {
   const port = await launchBackend(java, jar, token)
   const origin = `http://127.0.0.1:${port}`
   const appSession = session.fromPartition('persist:one-data')
+  await appSession.setProxy({ mode: 'direct' })
+  await waitForBackend(origin, token)
 
   appSession.webRequest.onBeforeSendHeaders((details, callback) => {
     if (details.url.startsWith(`${origin}/`)) {
@@ -67,11 +70,47 @@ async function start() {
   })
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   mainWindow.once('ready-to-show', () => mainWindow.show())
-  await mainWindow.loadURL(origin)
+  let lastError
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      await mainWindow.loadURL(origin, {
+        extraHeaders: `X-One-Data-Desktop-Token: ${token}\n`
+      })
+      lastError = null
+      break
+    } catch (error) {
+      lastError = error
+      await new Promise(resolve => setTimeout(resolve, 750 * (attempt + 1)))
+    }
+  }
+  if (lastError) throw lastError
   const loaded = await mainWindow.webContents.executeJavaScript(
     "Boolean(document.getElementById('splash-screen') || document.getElementById('app-shell'))"
   )
   if (!loaded) throw new Error('The desktop interface did not load from the local backend.')
+}
+
+function waitForBackend(origin, token) {
+  return new Promise((resolve, reject) => {
+    let attempts = 0
+    function check() {
+      const request = http.get(`${origin}/`, {
+        headers: { 'X-One-Data-Desktop-Token': token },
+        timeout: 3000
+      }, response => {
+        response.resume()
+        if (response.statusCode === 200) resolve()
+        else retry(new Error(`The local service returned HTTP ${response.statusCode}.`))
+      })
+      request.on('error', retry)
+      request.on('timeout', () => request.destroy(new Error('Local service timed out.')))
+    }
+    function retry(error) {
+      if (++attempts >= 20) reject(error)
+      else setTimeout(check, 500)
+    }
+    check()
+  })
 }
 
 function launchBackend(java, jar, token) {
