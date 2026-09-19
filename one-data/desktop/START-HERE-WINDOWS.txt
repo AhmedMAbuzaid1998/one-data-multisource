@@ -1,0 +1,12 @@
+ONE DATA DESKTOP - WINDOWS
+
+1. Extract the complete ZIP to a folder on your computer.
+2. Open the extracted "One Data" folder.
+3. Double-click "One Data.exe" inside it. Keep the folder and all its contents together; the app needs its bundled resources and Java runtime.
+4. Wait for the app window to open (the first launch can take up to 90 seconds). Close the app window when done.
+
+No Java, Node.js, Maven, or separate web server needs to be installed. The bundled sample workbook works offline. Use "Upload personal file" in the app for your own Excel workbook during the current session.
+
+If an older One Data error dialog is still open, close it before launching this version. If Windows still focuses an old instance, restart Windows and run One Data.exe from this extracted folder.
+
+This demo does not synchronize the shared team workbook or Jira request status across computers. The build is unsigned, so ask IT to approve and sign it for organization-wide distribution. Follow organization policy if security software blocks it; do not bypass security warnings.

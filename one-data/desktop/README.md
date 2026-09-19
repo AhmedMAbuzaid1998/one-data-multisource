@@ -4,7 +4,7 @@ The desktop app bundles the existing React interface, Spring Boot service, sampl
 
 ## Use a packaged app
 
-- **Windows:** Install `One Data Setup 1.0.0.exe` or run the portable `One Data 1.0.0.exe` from the `release` folder.
+- **Windows:** Download `One Data Windows - complete app.zip`, extract it completely, and run `One Data.exe` inside the `One Data` folder. Keep that folder together. Alternatively use the Windows installer after IT approval.
 - **macOS:** Use the `.dmg` for your Mac's processor (`x64` for Intel, `arm64` for Apple silicon) and copy One Data to Applications.
 
 The app launches its own local service and closes it on exit. The sample data is bundled, while an uploaded personal workbook is active only in the current app session. Request text is copied manually for Jira. There is no shared live workbook or shared request status in this desktop build.
@@ -22,4 +22,4 @@ npm ci --prefix one-data/desktop
 
 On Windows run `npm --prefix one-data/desktop run dist:win`. On a Mac run `npm --prefix one-data/desktop run dist:mac`. Output is under `one-data/desktop/release`. Each platform builds a matching bundled Java runtime, so build the Mac app on macOS.
 
-The repository also has a manual **Desktop builds** GitHub Actions workflow for Windows x64, Intel Mac, and Apple silicon Mac. After it runs, download the artifacts from that workflow run. The workflow does not sign them.
+The repository also has a manual **Desktop builds** GitHub Actions workflow for Windows x64, Intel Mac, and Apple silicon Mac. After it runs, download the artifacts from that workflow run. The Windows artifact includes the complete app folder ZIP and `START HERE.txt`. The workflow does not sign them.

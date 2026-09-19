@@ -39,6 +39,15 @@ jobs:
         run: npm ci --prefix one-data/desktop
       - name: Build desktop package
         run: npm --prefix one-data/desktop run dist:${{ matrix.platform }}
+      - name: Zip complete Windows app
+        if: matrix.platform == 'win'
+        shell: pwsh
+        run: |
+          $release = 'one-data/desktop/release'
+          $folder = Join-Path $release 'One Data'
+          Copy-Item -LiteralPath (Join-Path $release 'win-unpacked') -Destination $folder -Recurse
+          Copy-Item -LiteralPath 'one-data/desktop/START-HERE-WINDOWS.txt' -Destination (Join-Path $release 'START HERE.txt')
+          Compress-Archive -Path $folder,(Join-Path $release 'START HERE.txt') -DestinationPath (Join-Path $release 'One Data Windows - complete app.zip')
       - name: Save installer artifacts
         uses: actions/upload-artifact@v4
         with:
