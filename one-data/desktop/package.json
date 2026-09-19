@@ -1,0 +1,32 @@
+{
+  "name": "one-data-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "One Data desktop app",
+  "main": "main.cjs",
+  "scripts": {
+    "prepare:bundle": "npm --prefix ../frontend run build && mvn -f ../backend/pom.xml -Pdesktop -DskipTests package && node scripts/prepare-runtime.mjs",
+    "start": "npm run prepare:bundle && electron .",
+    "dist:win": "npm run prepare:bundle && electron-builder --win nsis portable",
+    "dist:mac": "npm run prepare:bundle && electron-builder --mac dmg zip",
+    "pack": "npm run prepare:bundle && electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "44.4.3",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.onedata.desktop",
+    "productName": "One Data",
+    "asar": true,
+    "directories": { "output": "release" },
+    "files": ["main.cjs", "package.json"],
+    "extraResources": [
+      { "from": "build/one-data.jar", "to": "one-data.jar" },
+      { "from": "build/runtime", "to": "runtime" }
+    ],
+    "win": { "target": ["nsis", "portable"], "icon": "assets/icon.ico" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true },
+    "mac": { "target": ["dmg", "zip"], "icon": "assets/icon.png", "category": "public.app-category.productivity" }
+  }
+}

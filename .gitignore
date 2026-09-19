@@ -1,4 +1,6 @@
 /.idea/
 /outputs/
 /target/
+one-data/desktop/build/
+one-data/desktop/release/
 **/vite.config.ts.timestamp-*.mjs

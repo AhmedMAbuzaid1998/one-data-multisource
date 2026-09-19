@@ -21,3 +21,7 @@ The backend runs on port 8080. The frontend development server proxies `/api` re
 - Switch between light and dark mode.
 
 Personal uploads are parsed in memory for the response and are not saved to the shared dataset. The token UI is currently hidden for the demo, while its code remains in the project.
+
+## Desktop app
+
+See [desktop build and installation instructions](one-data/desktop/README.md). Packaged Windows and macOS apps bundle the UI, backend, and Java runtime, but the shared workbook is not live-synced in this demo.
