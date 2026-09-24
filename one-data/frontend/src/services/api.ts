@@ -16,6 +16,7 @@ export interface TestUser {
 }
 
 export interface ConfluenceState {
+  loginOpen?: boolean
   rows: TestUser[]
   status: 'signed-out' | 'sign-in-required' | 'refreshing' | 'live' | 'cached' | 'error' | 'denied'
   message: string
@@ -33,6 +34,7 @@ declare global {
       signIn: () => Promise<ConfluenceState>
       refresh: () => Promise<ConfluenceState>
       signOut: () => Promise<ConfluenceState>
+      useOffline: () => Promise<ConfluenceState>
       onChange: (callback: (state: ConfluenceState) => void) => () => void
     }
   }

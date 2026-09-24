@@ -1,6 +1,6 @@
 {
   "name": "one-data-confluence-test",
-  "version": "1.1.0-confluence.1",
+  "version": "1.1.0-confluence.2",
   "private": true,
   "description": "One Data desktop app",
   "main": "main.cjs",
@@ -21,7 +21,7 @@
     "productName": "One Data Confluence Test",
     "asar": true,
     "directories": {
-      "output": "release-confluence"
+      "output": "release-confluence-login"
     },
     "files": [
       "main.cjs",

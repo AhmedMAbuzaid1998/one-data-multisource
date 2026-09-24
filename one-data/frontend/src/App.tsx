@@ -7,6 +7,7 @@ import SmartSearch from './components/SmartSearch'
 import TestDataRequest from './components/TestDataRequest'
 import DatasetUpload from './components/DatasetUpload'
 import ConfluenceSource from './components/ConfluenceSource'
+import StartupSignIn from './components/StartupSignIn'
 import { fetchUsers, fetchStats, Filters, TestUser, ConfluenceState } from './services/api'
 
 const EMPTY_FILTERS: Filters = { market: '', environment: '', userType: '', role: '', paymentType: '', accountId: '', serviceId: '' }
@@ -33,6 +34,10 @@ export default function App() {
   const [connection, setConnection] = useState<'checking' | 'online' | 'offline'>('checking')
   const [confluence, setConfluence] = useState<ConfluenceState | null>(null)
   const desktop = Boolean(window.confluenceDesktop)
+  const [workspaceOpen, setWorkspaceOpen] = useState(!desktop)
+  const [signInPending, setSignInPending] = useState(false)
+  const [signInError, setSignInError] = useState('')
+  const automaticSignInStarted = useRef(false)
   const localUsers = personalUsers ?? (desktop ? confluence?.rows ?? [] : null)
   const requestId = useRef(0)
   const finishIntro = useCallback(() => setShowSplash(false), [])
@@ -66,12 +71,41 @@ export default function App() {
     const receive = (state: ConfluenceState) => {
       if (disposed) return
       setConfluence(state)
+      if (state.status === 'live') setWorkspaceOpen(true)
+      if (state.status === 'signed-out' || state.status === 'denied') {
+        setWorkspaceOpen(false)
+        setPersonalUsers(null)
+        setPersonalFileName(null)
+      }
       setConnection(state.status === 'live' ? 'online' : state.status === 'refreshing' ? 'checking' : 'offline')
     }
     const unsubscribe = bridge.onChange(receive)
-    bridge.getState().then(receive).catch(() => setError('Desktop connection unavailable. Restart the app.'))
+    bridge.getState().then(receive).catch(() => setSignInError('Desktop connection unavailable. Restart the app.'))
     return () => { disposed = true; unsubscribe() }
   }, [])
+  const requestSignIn = useCallback(async () => {
+    setSignInPending(true)
+    setSignInError('')
+    try { await window.confluenceDesktop?.signIn() }
+    catch { setSignInError('The sign-in window could not open. Try again.') }
+    finally { setSignInPending(false) }
+  }, [])
+  useEffect(() => {
+    if (desktop && !showSplash && confluence && !workspaceOpen && !automaticSignInStarted.current) {
+      automaticSignInStarted.current = true
+      void requestSignIn()
+    }
+  }, [desktop, showSplash, confluence, workspaceOpen, requestSignIn])
+  async function openOfflineCopy() {
+    setSignInPending(true)
+    setSignInError('')
+    try {
+      const state = await window.confluenceDesktop?.useOffline()
+      if (state?.rows.length && state.lastSuccess && state.status === 'cached') setWorkspaceOpen(true)
+      else setSignInError('No saved copy is available. Please sign in.')
+    } catch { setSignInError('The offline copy could not be opened. Please sign in.') }
+    finally { setSignInPending(false) }
+  }
   useEffect(() => {
     if (personalUsers === null && !desktop) loadUsers(filters)
     else { setLoading(false); setError('') }
@@ -134,7 +168,8 @@ export default function App() {
   return (
     <>
       {showSplash && <SplashScreen onDone={finishIntro} />}
-      {!showSplash && <div id="app-shell" className="app-shell">
+      {!showSplash && !workspaceOpen && <StartupSignIn state={confluence} error={signInError} pending={signInPending} onSignIn={requestSignIn} onOffline={openOfflineCopy} />}
+      {!showSplash && workspaceOpen && <div id="app-shell" className="app-shell">
         <header id="topbar" className="topbar">
           <a id="brand-home" className="brand" href="#main" aria-label="One Data home"><BrandMark id="header-brand-mark" /><span id="brand-name">ne Data<span id="brand-period" className="brand-period">.</span></span></a>
           <span id="workspace-label" className="workspace-label">TEST DATA WORKSPACE</span>

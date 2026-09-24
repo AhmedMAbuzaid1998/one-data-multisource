@@ -1,6 +1,6 @@
 # One Data Confluence test desktop
 
-Version `1.1.0-confluence.1` is a separate app and OS user profile on branch `codex/confluence-desktop-test`. The original `main` version and the original release ZIPs remain available.
+Version `1.1.0-confluence.2` is a separate app and OS user profile on branch `codex/confluence-desktop-test`. The original `main` version and the original release ZIPs remain available.
 
 See [CONFLUENCE-TEST-INSTRUCTIONS.txt](CONFLUENCE-TEST-INSTRUCTIONS.txt) for installation, individual sign-in, refresh, offline behavior, personal uploads, and supported table columns.
 
@@ -23,6 +23,8 @@ npm --prefix one-data/desktop test
 npm --prefix one-data/desktop run pack
 ```
 
-Output is `release-confluence/win-unpacked` on Windows. Zip this complete folder together with the instructions; do not distribute just its EXE. `dist:win` creates an installer; `dist:mac` builds DMG and ZIP on a Mac. The manual GitHub workflow on this branch builds all three platforms and creates the Windows folder ZIP.
+Output is `release-confluence-login/win-unpacked` on Windows. Zip this complete folder together with the instructions; do not distribute just its EXE. `dist:win` creates an installer; `dist:mac` builds DMG and ZIP on a Mac. The manual GitHub workflow on this branch builds all three platforms and creates the Windows folder ZIP.
 
-The parser/cache tests use invented fixture values, not the screenshot's test credentials. `scripts/smoke-desktop.mjs <executable> --confluence` checks the packaged bridge, signed-out state, five-minute refresh configuration, and directory UI in a clean profile. Live end-to-end validation still requires the user's Vodafone account and network. If organization policy disallows embedded-browser SAML sign-in or cookie-authenticated REST calls, an IT-approved OAuth/SSO integration is needed; the app does not bypass that policy.
+The parser/cache tests use invented fixture values, not the screenshot's test credentials. `scripts/smoke-desktop.mjs <executable> --confluence-login` checks the packaged bridge, automatic sign-in window, hidden workspace, startup gate, and five-minute refresh configuration in a clean profile. Live end-to-end validation still requires the user's Vodafone account and network. If organization policy disallows embedded-browser SAML sign-in or cookie-authenticated REST calls, an IT-approved OAuth/SSO integration is needed; the app does not bypass that policy.
+
+Startup now opens sign-in automatically after the splash, once per app launch. Live data opens the workspace; cached data requires an explicit Use offline copy action. Closing sign-in leaves the retry screen. Explicit sign-out locks the workspace again; session expiry after entry retains data with the existing sign-in notice.

@@ -85,8 +85,14 @@ async function attachConfluence(mainWindow, appOrigin) {
       const result = await service.refresh()
       if (result.status === 'live' && loginWindow && !loginWindow.isDestroyed()) loginWindow.close()
     })
-    loginWindow.on('closed', () => { loginWindow = null })
+    loginWindow.on('closed', () => { loginWindow = null; service.publish({ loginOpen: false }) })
+    service.publish({ loginOpen: true })
     loginWindow.loadURL(PAGE_URL).catch(() => service.publish({ status: service.state.rows.length ? 'cached' : 'error', message: 'The sign-in page could not load. Check your network or organization VPN.' }))
+    return service.snapshot()
+  })
+  handle('use-offline', () => {
+    service.useOffline()
+    if (loginWindow && !loginWindow.isDestroyed()) loginWindow.close()
     return service.snapshot()
   })
   handle('sign-out', async () => {

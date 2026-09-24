@@ -92,7 +92,7 @@ async function start() {
   }
   if (lastError) throw lastError
   const loaded = await mainWindow.webContents.executeJavaScript(
-    "Boolean(document.getElementById('splash-screen') || document.getElementById('app-shell'))"
+    "Boolean(document.getElementById('splash-screen') || document.getElementById('startup-sign-in') || document.getElementById('app-shell'))"
   )
   if (!loaded) throw new Error('The desktop interface did not load from the local backend.')
 }

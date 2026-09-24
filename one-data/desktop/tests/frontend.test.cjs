@@ -38,3 +38,14 @@ test('source card distinguishes stale cached data and personal-file override', (
   assert.ok(html.includes('Page version 2'))
   assert.ok(html.includes('Sign out &amp; clear local copy'))
 })
+test('startup gate offers retry without a cache, and offers dated offline entry only with a saved copy', () => {
+  const Gate = component('StartupSignIn')
+  const props = { error: '', pending: false, onSignIn: () => {}, onOffline: () => {} }
+  const empty = renderToStaticMarkup(React.createElement(Gate, { ...props, state: { rows: [], status: 'signed-out' } }))
+  assert.ok(empty.includes('startup-retry-sign-in'))
+  assert.ok(!empty.includes('startup-use-offline'))
+  assert.ok(!empty.includes('app-shell'))
+  const cached = renderToStaticMarkup(React.createElement(Gate, { ...props, state: { rows: [{}], lastSuccess: '2026-01-01T00:00:00Z', status: 'cached' } }))
+  assert.ok(cached.includes('startup-use-offline'))
+  assert.ok(cached.includes('This copy may be out of date'))
+})

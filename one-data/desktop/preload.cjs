@@ -4,6 +4,7 @@ contextBridge.exposeInMainWorld('confluenceDesktop', {
   signIn: () => ipcRenderer.invoke('confluence:sign-in'),
   refresh: () => ipcRenderer.invoke('confluence:refresh'),
   signOut: () => ipcRenderer.invoke('confluence:sign-out'),
+  useOffline: () => ipcRenderer.invoke('confluence:use-offline'),
   onChange: callback => {
     const listener = (_event, state) => callback(state)
     ipcRenderer.on('confluence:changed', listener)

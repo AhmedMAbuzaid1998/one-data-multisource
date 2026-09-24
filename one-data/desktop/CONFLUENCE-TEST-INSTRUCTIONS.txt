@@ -1,4 +1,4 @@
-ONE DATA CONFLUENCE TEST - 1.1.0-confluence.1
+ONE DATA CONFLUENCE TEST - 1.1.0-confluence.2
 
 WINDOWS
 Extract the full ZIP. Open "One Data Confluence Test" and double-click "One Data Confluence Test.exe". Keep the entire folder together. No separate Java, Node.js, or server installation is needed.
@@ -8,9 +8,9 @@ Use the matching Mac build (arm64 for Apple silicon, x64 for Intel). Open the DM
 
 FIRST USE
 1. Connect to your organization network/VPN if Confluence requires it.
-2. Click "Sign in to Confluence" in the data directory.
+2. After the splash screen, the Confluence sign-in window opens automatically. The main screen stays hidden until you connect or choose a saved offline copy.
 3. Complete Vodafone/Microsoft sign-in and MFA using your own account in the separate sign-in window.
-4. The app reads page 346517143 once you have signed in. If the window remains open after login, return to the app and click "Refresh now".
+4. The app reads page 346517143 after sign-in and opens the main screen automatically when data is ready. If sign-in is cancelled or fails, choose Retry sign-in. If a previous successful copy exists, choose Use offline copy; its download date is shown. No cached copy means sign-in is required.
 5. Confluence refreshes every five minutes while the app is open. The card shows the last successful download and page version.
 
 SOURCE
@@ -33,3 +33,5 @@ You can still upload a personal Excel file. It stays active while Confluence ref
 TEST LIMITATIONS
 This is a separate test app/profile; the original working app and ZIP are retained. Live page parsing and your organization's embedded-browser SSO policy need validation with an authorized teammate. If corporate sign-in blocks embedded apps, use the approved error details to arrange an OAuth/SSO integration with IT; do not bypass the policy. This build reads Confluence and never writes to the page.
 The app is unsigned; follow your organization's deployment policy.
+
+This release adds Splash -> automatic sign-in -> main screen. Session expiry inside the workspace shows a sign-in notice and retains the last data. Signing out returns to the sign-in screen. Replaying the splash while connected does not trigger another login.

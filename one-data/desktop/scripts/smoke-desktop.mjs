@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 
 const exe = process.argv[2]
-const confluence = process.argv.includes('--confluence')
+const startupLogin = process.argv.includes('--confluence-login')
+const confluence = startupLogin || process.argv.includes('--confluence')
 if (!exe) throw new Error('Pass the packaged executable path.')
 
 const profile = await mkdtemp(path.join(tmpdir(), 'one-data-smoke-'))
@@ -26,7 +27,9 @@ try {
         const ws = new WebSocket(page.webSocketDebuggerUrl)
         const timeout = setTimeout(() => { ws.close(); reject(new Error('DevTools timed out.')) }, 3000)
         ws.onopen = () => ws.send(JSON.stringify({ id: 1, method: 'Runtime.evaluate', params: {
-          expression: confluence
+          expression: startupLogin
+            ? '(async()=>{const state=await window.confluenceDesktop?.getState(); return JSON.stringify({root:!!document.getElementById("startup-sign-in"),confluence:!!document.getElementById("startup-retry-sign-in"),workspace:!!document.getElementById("app-shell"),loginOpen:state?.loginOpen,status:state?.status,rows:state?.rows.length,refreshMinutes:state?.refreshMinutes})})()'
+            : confluence
             ? '(async()=>{const state=await window.confluenceDesktop?.getState(); return JSON.stringify({root:!!document.getElementById("app-shell"),confluence:!!document.getElementById("confluence-sign-in"),status:state?.status,rows:state?.rows.length,refreshMinutes:state?.refreshMinutes})})()'
             : 'JSON.stringify({url:location.href,title:document.title,root:!!document.getElementById("root"),text:document.body.innerText.slice(0,150)})',
           returnByValue: true, awaitPromise: true
@@ -40,11 +43,12 @@ try {
         }
         ws.onerror = reject
       })
-      if (result.root && (!confluence || result.confluence)) break
+      if (result.root && (!confluence || result.confluence) && (!startupLogin || result.loginOpen)) break
     } catch { /* Wait for Electron and the backend to start. */ }
   }
   if (!result?.root) throw new Error(`The packaged interface did not load: ${JSON.stringify(result)}`)
-  if (confluence && (!result.confluence || result.status !== 'signed-out' || result.rows !== 0 || result.refreshMinutes !== 5)) throw new Error(`Confluence initial state failed: ${JSON.stringify(result)}`)
+  if (confluence && (!result.confluence || result.rows !== 0 || result.refreshMinutes !== 5)) throw new Error(`Confluence initial state failed: ${JSON.stringify(result)}`)
+  if (startupLogin && (!result.loginOpen || result.workspace)) throw new Error(`Automatic sign-in gate failed: ${JSON.stringify(result)}`)
   console.log(JSON.stringify(result))
 } finally {
   // Close the window normally so Electron stops its Java child before exiting.

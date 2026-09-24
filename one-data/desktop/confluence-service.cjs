@@ -10,7 +10,7 @@ class ConfluenceService {
     this.epoch = 0
     this.busy = false
     this.active = false
-    this.state = { rows: [], status: 'signed-out', message: 'Sign in to Confluence to download your team data.', owner: '', lastSuccess: null, version: null, title: '', pageUrl: PAGE_URL, refreshMinutes: 5 }
+    this.state = { rows: [], status: 'signed-out', loginOpen: false, message: 'Sign in to Confluence to download your team data.', owner: '', lastSuccess: null, version: null, title: '', pageUrl: PAGE_URL, refreshMinutes: 5 }
   }
   publish(update) { this.state = { ...this.state, ...update }; this.notify(this.snapshot()); return this.snapshot() }
   snapshot() { return structuredClone(this.state) }
@@ -68,6 +68,12 @@ class ConfluenceService {
     try { await this.cache.clear() }
     catch { this.publish({ message: 'Signed out. Data is hidden, but the encrypted local copy could not be deleted. Check local file permissions.' }) }
     return this.snapshot()
+  }
+  useOffline() {
+    if (!this.state.rows.length || !this.state.lastSuccess) throw new Error('No saved data is available. Please sign in.')
+    this.epoch++
+    this.active = false
+    return this.publish({ status: 'cached', message: 'Using your last successful copy offline. Sign in to resume automatic updates.' })
   }
 }
 module.exports = { ConfluenceService, ORIGIN, PAGE_URL, REFRESH_MS }

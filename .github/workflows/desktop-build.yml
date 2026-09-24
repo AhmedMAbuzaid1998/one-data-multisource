@@ -45,19 +45,19 @@ jobs:
         if: matrix.platform == 'win'
         shell: pwsh
         run: |
-          $release = 'one-data/desktop/release-confluence'
+          $release = 'one-data/desktop/release-confluence-login'
           $folder = Join-Path $release 'One Data Confluence Test'
           Copy-Item -LiteralPath (Join-Path $release 'win-unpacked') -Destination $folder -Recurse
           Copy-Item -LiteralPath 'one-data/desktop/CONFLUENCE-TEST-INSTRUCTIONS.txt' -Destination (Join-Path $release 'START HERE.txt')
-          Compress-Archive -Path $folder,(Join-Path $release 'START HERE.txt') -DestinationPath (Join-Path $release 'One Data Confluence Test Windows.zip')
+          Compress-Archive -Path $folder,(Join-Path $release 'START HERE.txt') -DestinationPath (Join-Path $release 'One Data Confluence Test 1.1.0-confluence.2 Windows.zip')
       - name: Save installer artifacts
         uses: actions/upload-artifact@v4
         with:
           name: one-data-confluence-test-${{ matrix.platform }}-${{ matrix.architecture }}
           path: |
-            one-data/desktop/release-confluence/*.exe
-            one-data/desktop/release-confluence/*.dmg
-            one-data/desktop/release-confluence/*.zip
+            one-data/desktop/release-confluence-login/*.exe
+            one-data/desktop/release-confluence-login/*.dmg
+            one-data/desktop/release-confluence-login/*.zip
             one-data/desktop/CONFLUENCE-TEST-INSTRUCTIONS.txt
           if-no-files-found: error
           retention-days: 14

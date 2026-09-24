@@ -95,3 +95,22 @@ test('sign-out prevents an in-flight refresh from repopulating data', async () =
   assert.equal(source.saved, null)
   assert.equal(service.active, false)
 })
+test('offline entry requires a saved successful dataset', () => {
+  const { service } = fixture()
+  assert.throws(() => service.useOffline(), /No saved data/)
+})
+test('offline entry keeps the copy and prevents pending login refresh from changing it', async () => {
+  const { service, source } = fixture()
+  await service.refresh()
+  let complete
+  service.fetchJson = () => new Promise(resolve => { complete = resolve })
+  const refresh = service.refresh()
+  const offline = service.useOffline()
+  complete({ username: 'different-user' })
+  await refresh
+  assert.equal(offline.status, 'cached')
+  assert.equal(service.state.owner, 'tester-a')
+  assert.equal(service.state.rows.length, 1)
+  assert.equal(service.active, false)
+  assert.equal(source.saved.owner, 'tester-a')
+})
