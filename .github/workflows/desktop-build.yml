@@ -1,4 +1,4 @@
-name: Desktop builds
+name: Confluence test desktop builds
 
 on:
   workflow_dispatch:
@@ -37,24 +37,27 @@ jobs:
         run: npm ci --prefix one-data/frontend
       - name: Install desktop dependencies
         run: npm ci --prefix one-data/desktop
+      - name: Test Confluence parsing and cache behavior
+        run: npm --prefix one-data/desktop test
       - name: Build desktop package
         run: npm --prefix one-data/desktop run dist:${{ matrix.platform }}
       - name: Zip complete Windows app
         if: matrix.platform == 'win'
         shell: pwsh
         run: |
-          $release = 'one-data/desktop/release'
-          $folder = Join-Path $release 'One Data'
+          $release = 'one-data/desktop/release-confluence'
+          $folder = Join-Path $release 'One Data Confluence Test'
           Copy-Item -LiteralPath (Join-Path $release 'win-unpacked') -Destination $folder -Recurse
-          Copy-Item -LiteralPath 'one-data/desktop/START-HERE-WINDOWS.txt' -Destination (Join-Path $release 'START HERE.txt')
-          Compress-Archive -Path $folder,(Join-Path $release 'START HERE.txt') -DestinationPath (Join-Path $release 'One Data Windows - complete app.zip')
+          Copy-Item -LiteralPath 'one-data/desktop/CONFLUENCE-TEST-INSTRUCTIONS.txt' -Destination (Join-Path $release 'START HERE.txt')
+          Compress-Archive -Path $folder,(Join-Path $release 'START HERE.txt') -DestinationPath (Join-Path $release 'One Data Confluence Test Windows.zip')
       - name: Save installer artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: one-data-${{ matrix.platform }}-${{ matrix.architecture }}
+          name: one-data-confluence-test-${{ matrix.platform }}-${{ matrix.architecture }}
           path: |
-            one-data/desktop/release/*.exe
-            one-data/desktop/release/*.dmg
-            one-data/desktop/release/*.zip
+            one-data/desktop/release-confluence/*.exe
+            one-data/desktop/release-confluence/*.dmg
+            one-data/desktop/release-confluence/*.zip
+            one-data/desktop/CONFLUENCE-TEST-INSTRUCTIONS.txt
           if-no-files-found: error
           retention-days: 14

@@ -54,3 +54,15 @@ main{max-width:1680px;margin:auto;padding:30px 4% 0}.hero{min-height:278px;backg
 .dataset-source{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:13px 15px;padding:15px 18px;margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow)}.dataset-source.personal{border-color:color-mix(in srgb,var(--success) 40%,var(--border));background:color-mix(in srgb,var(--success) 4%,var(--surface))}.dataset-source-icon{width:36px;height:36px;display:grid;place-items:center;border-radius:8px;background:var(--soft);border:1px solid var(--border);color:var(--accent);font-size:18px}.dataset-source.personal .dataset-source-icon{color:var(--success)}.dataset-source-copy>span{font-size:9px;font-weight:700;letter-spacing:1.3px;color:var(--muted)}.dataset-source-copy h3{font-size:14px;margin-top:2px}.dataset-source-copy p{margin-top:3px;color:var(--muted);font-size:11px}.dataset-source-actions{display:flex;gap:8px}.dataset-source-actions button{height:36px;padding:0 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface);color:var(--text);font-size:11px;font-weight:600}.dataset-source-actions .primary-action{background:var(--accent);border-color:var(--accent);color:white}.dataset-format-help{grid-column:2/-1;font-size:10px;color:var(--muted)}.dataset-format-help summary{cursor:pointer;width:max-content}.dataset-format-help p{margin-top:7px;line-height:1.5}.dataset-upload-error{color:var(--accent)!important;font-weight:600}.personal-token-note{display:inline-block;color:var(--muted);font-size:9px;white-space:nowrap}
 @media(max-width:760px){.dataset-source{grid-template-columns:auto 1fr}.dataset-source-actions{grid-column:1/-1}.dataset-source-actions button{flex:1}.dataset-format-help{grid-column:1/-1}}
 @media(max-width:500px){.dataset-source-actions{flex-direction:column}}
+/* Confluence desktop test source. */
+.confluence-source { border: 1px solid var(--border, #ddd); background: var(--surface, #fff); border-radius: 16px; padding: 22px; margin: 16px 0; }
+.confluence-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.confluence-heading h3 { margin: 4px 0 12px; font-size: 20px; }
+.confluence-source p { line-height: 1.5; }
+.confluence-meta { font-size: 12px; opacity: .78; margin: 8px 0; }
+.confluence-status { border: 1px solid currentColor; border-radius: 24px; padding: 6px 12px; font-size: 12px; white-space: nowrap; }
+.confluence-status.live { color: #14824b; }
+.confluence-status.cached, .confluence-status.sign-in-required { color: #a16500; }
+.confluence-source .dataset-source-actions { justify-content: flex-start; margin-top: 16px; flex-wrap: wrap; }
+.user-table td.confluence-long-cell { white-space: pre-line; min-width: 180px; max-width: 380px; line-height: 1.5; }
+[data-theme="dark"] .confluence-source { background: #1e1e21; border-color: #38383c; }

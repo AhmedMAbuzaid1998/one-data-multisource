@@ -1,25 +1,28 @@
-# One Data desktop
+# One Data Confluence test desktop
 
-The desktop app bundles the existing React interface, Spring Boot service, sample workbook, and a Java 17 runtime. Teammates do not need Java, Maven, Node.js, or a local web-server setup to run a packaged copy. It works on Windows and macOS as a local, single-user demo.
+Version `1.1.0-confluence.1` is a separate app and OS user profile on branch `codex/confluence-desktop-test`. The original `main` version and the original release ZIPs remain available.
 
-## Use a packaged app
+See [CONFLUENCE-TEST-INSTRUCTIONS.txt](CONFLUENCE-TEST-INSTRUCTIONS.txt) for installation, individual sign-in, refresh, offline behavior, personal uploads, and supported table columns.
 
-- **Windows:** Download `One Data Windows - complete app.zip`, extract it completely, and run `One Data.exe` inside the `One Data` folder. Keep that folder together. Alternatively use the Windows installer after IT approval.
-- **macOS:** Use the `.dmg` for your Mac's processor (`x64` for Intel, `arm64` for Apple silicon) and copy One Data to Applications.
+## Architecture
 
-The app launches its own local service and closes it on exit. The sample data is bundled, while an uploaded personal workbook is active only in the current app session. Request text is copied manually for Jira. There is no shared live workbook or shared request status in this desktop build.
+The existing React/Spring Boot desktop app runs locally. A narrow Electron preload bridge exposes fixed Confluence actions only. An isolated, sandboxed sign-in window opens the supplied Confluence page and its Microsoft SAML sign-in flow. It has no preload bridge and no Node access. Each app launch uses a new in-memory authentication session. Corporate proxy and certificate settings apply; certificate errors are not bypassed.
 
-These builds are currently **unsigned**. Your IT team must approve distribution and supply code-signing certificates (and Apple notarization) before a broad organization rollout. Follow organization security policy rather than bypassing an OS warning.
+The Electron main process reads the current Confluence user and the page's rendered table through read-only REST endpoints. It verifies the account before fetching data, never reads or stores a sign-in password, and never sends Confluence data to the local sample-data backend or an external AI service. HTML is parsed into text with parse5 and displayed through React, without rendering remote HTML.
 
-## Build installers
+After a valid download, the table is encrypted with Electron safeStorage in this test app's OS-user profile. This cache includes any test-account passwords present in the table. Local confidentiality depends on the operating-system user account. Offline startup permits that same OS user to read their last copy; it does not prove the Confluence session remains authorized. A confirmed access denial clears the cache. Explicit sign-out clears the data and in-memory login session. Account switches clear the previous account's data before fetching a replacement. Invalid/empty tables and outages keep the last valid copy.
 
-On a build machine, install Node.js 22, Maven, and a full Java 17 JDK; set `JAVA_HOME` to the JDK. From the repository root:
+## Build and verify
 
-```bash
+Requirements: Node 22, Java JDK 17 with JAVA_HOME, Maven.
+
+```sh
 npm ci --prefix one-data/frontend
 npm ci --prefix one-data/desktop
+npm --prefix one-data/desktop test
+npm --prefix one-data/desktop run pack
 ```
 
-On Windows run `npm --prefix one-data/desktop run dist:win`. On a Mac run `npm --prefix one-data/desktop run dist:mac`. Output is under `one-data/desktop/release`. Each platform builds a matching bundled Java runtime, so build the Mac app on macOS.
+Output is `release-confluence/win-unpacked` on Windows. Zip this complete folder together with the instructions; do not distribute just its EXE. `dist:win` creates an installer; `dist:mac` builds DMG and ZIP on a Mac. The manual GitHub workflow on this branch builds all three platforms and creates the Windows folder ZIP.
 
-The repository also has a manual **Desktop builds** GitHub Actions workflow for Windows x64, Intel Mac, and Apple silicon Mac. After it runs, download the artifacts from that workflow run. The Windows artifact includes the complete app folder ZIP and `START HERE.txt`. The workflow does not sign them.
+The parser/cache tests use invented fixture values, not the screenshot's test credentials. `scripts/smoke-desktop.mjs <executable> --confluence` checks the packaged bridge, signed-out state, five-minute refresh configuration, and directory UI in a clean profile. Live end-to-end validation still requires the user's Vodafone account and network. If organization policy disallows embedded-browser SAML sign-in or cookie-authenticated REST calls, an IT-approved OAuth/SSO integration is needed; the app does not bypass that policy.

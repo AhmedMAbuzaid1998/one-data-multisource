@@ -10,6 +10,32 @@ export interface TestUser {
   paymentType: string
   accountId: string
   serviceId: string
+  password?: string
+  serviceType?: string
+  journey?: string
+}
+
+export interface ConfluenceState {
+  rows: TestUser[]
+  status: 'signed-out' | 'sign-in-required' | 'refreshing' | 'live' | 'cached' | 'error' | 'denied'
+  message: string
+  owner: string
+  lastSuccess: string | null
+  version: number | null
+  title: string
+  pageUrl: string
+  refreshMinutes: number
+}
+declare global {
+  interface Window {
+    confluenceDesktop?: {
+      getState: () => Promise<ConfluenceState>
+      signIn: () => Promise<ConfluenceState>
+      refresh: () => Promise<ConfluenceState>
+      signOut: () => Promise<ConfluenceState>
+      onChange: (callback: (state: ConfluenceState) => void) => () => void
+    }
+  }
 }
 
 export interface TokenResponse {

@@ -3,4 +3,5 @@
 /target/
 one-data/desktop/build/
 one-data/desktop/release/
+one-data/desktop/release-confluence/
 **/vite.config.ts.timestamp-*.mjs

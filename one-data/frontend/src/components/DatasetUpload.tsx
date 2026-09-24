@@ -2,13 +2,14 @@ import { ChangeEvent, useRef, useState } from 'react'
 import { importUsers, TestUser } from '../services/api'
 
 interface Props {
+  confluence?: boolean
   personalFileName: string | null
   personalRowCount: number
   onLoaded: (users: TestUser[], fileName: string) => void
   onUseMain: () => void
 }
 
-export default function DatasetUpload({ personalFileName, personalRowCount, onLoaded, onUseMain }: Props) {
+export default function DatasetUpload({ personalFileName, personalRowCount, onLoaded, onUseMain, confluence = false }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState('')
@@ -33,12 +34,12 @@ export default function DatasetUpload({ personalFileName, personalRowCount, onLo
     <div id="dataset-source-icon" className="dataset-source-icon" aria-hidden="true">{personalFileName ? '▤' : '◫'}</div>
     <div id="dataset-source-copy" className="dataset-source-copy">
       <span id="dataset-source-label">DATA SOURCE</span>
-      <h3 id="dataset-source-title">{personalFileName ? personalFileName : 'Main team dataset'}</h3>
-      <p id="dataset-source-description">{personalFileName ? `${personalRowCount} personal rows are active in this browser session.` : 'Using the shared workbook maintained for your team.'}</p>
+      <h3 id="dataset-source-title">{personalFileName ? personalFileName : confluence ? 'Confluence table selected' : 'Main team dataset'}</h3>
+      <p id="dataset-source-description">{personalFileName ? `${personalRowCount} personal rows are active in this session.` : confluence ? 'You can upload a personal workbook to use during this session.' : 'Using the shared workbook maintained for your team.'}</p>
       {error && <p id="dataset-upload-error" className="dataset-upload-error" role="alert">{error}</p>}
     </div>
     <div id="dataset-source-actions" className="dataset-source-actions">
-      {personalFileName && <button id="dataset-use-main" type="button" onClick={onUseMain}>Use main data</button>}
+      {personalFileName && <button id="dataset-use-main" type="button" onClick={onUseMain}>{confluence ? 'Use Confluence data' : 'Use main data'}</button>}
       <button id="dataset-choose-file" className="primary-action" type="button" onClick={() => inputRef.current?.click()} disabled={importing}>{importing ? 'Importing…' : personalFileName ? 'Replace file' : 'Upload personal file'}</button>
       <input id="dataset-file-input" ref={inputRef} className="sr-only" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" onChange={chooseFile} />
     </div>

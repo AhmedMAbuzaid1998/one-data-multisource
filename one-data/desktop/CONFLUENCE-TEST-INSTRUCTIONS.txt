@@ -1,0 +1,35 @@
+ONE DATA CONFLUENCE TEST - 1.1.0-confluence.1
+
+WINDOWS
+Extract the full ZIP. Open "One Data Confluence Test" and double-click "One Data Confluence Test.exe". Keep the entire folder together. No separate Java, Node.js, or server installation is needed.
+
+MAC
+Use the matching Mac build (arm64 for Apple silicon, x64 for Intel). Open the DMG and copy the app to Applications. Mac builds need a Mac build runner; the Windows ZIP does not run on macOS.
+
+FIRST USE
+1. Connect to your organization network/VPN if Confluence requires it.
+2. Click "Sign in to Confluence" in the data directory.
+3. Complete Vodafone/Microsoft sign-in and MFA using your own account in the separate sign-in window.
+4. The app reads page 346517143 once you have signed in. If the window remains open after login, return to the app and click "Refresh now".
+5. Confluence refreshes every five minutes while the app is open. The card shows the last successful download and page version.
+
+SOURCE
+https://cps.confluence.agile.vodafone.com/pages/viewpage.action?pageId=346517143
+
+TABLE COLUMNS
+User name/MSISDN, Pass, User type, Service Type, Used in Which Journey.
+Later you can add Market, Environment, Role, Payment Type, Account ID, Service ID.
+Column order is flexible. Missing values stay blank. MSISDNs keep leading zeroes. Passwords are masked; Show reveals one on demand. Quick search includes service types and journeys, but excludes passwords.
+The existing smart-search parser understands its existing market/environment/payment vocabulary. New journey phrases can be searched with the quick-search box; this test does not add an external AI service.
+
+OFFLINE / SIGN-OUT
+After a successful download, the app stores an encrypted copy in this test app's per-user local profile using Windows DPAPI or macOS Keychain-backed encryption. If Confluence is unavailable, the last successful copy remains visible with a stale-data message. After restarting, that same OS user can view their saved copy offline; sign in again for live updates. If encrypted storage is unavailable, the app keeps data only in memory and tells you so.
+Sign out clears the local copy and the app's login session. A confirmed access denial also clears the copy. Offline access cannot detect a permission change until the app reconnects.
+Each teammate must use their own Windows/Mac login and authenticate Confluence themselves. No Confluence passwords, tokens, cookies, or downloaded team data are included in this package. Login cookies last only for the running app session.
+
+PERSONAL FILES
+You can still upload a personal Excel file. It stays active while Confluence refreshes in the background. Click "Use Confluence data" to switch back.
+
+TEST LIMITATIONS
+This is a separate test app/profile; the original working app and ZIP are retained. Live page parsing and your organization's embedded-browser SSO policy need validation with an authorized teammate. If corporate sign-in blocks embedded apps, use the approved error details to arrange an OAuth/SSO integration with IT; do not bypass the policy. This build reads Confluence and never writes to the page.
+The app is unsigned; follow your organization's deployment policy.

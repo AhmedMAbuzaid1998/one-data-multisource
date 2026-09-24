@@ -4,6 +4,10 @@ const { randomBytes } = require('node:crypto')
 const fs = require('node:fs')
 const http = require('node:http')
 const path = require('node:path')
+const { attachConfluence } = require('./confluence.cjs')
+
+app.setName('One Data Confluence Test')
+if (!app.commandLine.hasSwitch('user-data-dir')) app.setPath('userData', path.join(app.getPath('appData'), 'One Data Confluence Test'))
 
 let backend
 let quitting = false
@@ -49,7 +53,7 @@ async function start() {
   appSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false))
 
   mainWindow = new BrowserWindow({
-    title: 'One Data',
+    title: 'One Data · Confluence Test',
     width: 1400,
     height: 900,
     minWidth: 920,
@@ -57,6 +61,7 @@ async function start() {
     backgroundColor: '#111113',
     show: false,
     webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
       partition: 'persist:one-data',
       nodeIntegration: false,
       contextIsolation: true,
@@ -69,6 +74,8 @@ async function start() {
     if (!url.startsWith(`${origin}/`)) event.preventDefault()
   })
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  mainWindow.on('closed', () => { if (!quitting) app.quit() })
+  await attachConfluence(mainWindow, origin)
   mainWindow.once('ready-to-show', () => mainWindow.show())
   let lastError
   for (let attempt = 0; attempt < 3; attempt++) {
