@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Install frontend dependencies
+        run: npm ci --prefix one-data/frontend
+      - name: Install desktop dependencies without downloading Electron
+        run: npm ci --prefix one-data/desktop
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - name: Build frontend
+        run: npm --prefix one-data/frontend run build
+      - name: Test parsing, caching, merging and search
+        run: npm --prefix one-data/desktop test
+      - name: Verify backend and bundle frontend
+        run: mvn -B -f one-data/backend/pom.xml -Pdesktop verify

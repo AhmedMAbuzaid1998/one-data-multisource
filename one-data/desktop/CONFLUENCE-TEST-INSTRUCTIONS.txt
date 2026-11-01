@@ -1,37 +1,25 @@
-ONE DATA CONFLUENCE TEST - 1.1.0-confluence.2
+ONE DATA - 1.2.0-multisource.1 - WINDOWS - MANUAL SIGN-IN
 
-WINDOWS
-Extract the full ZIP. Open "One Data Confluence Test" and double-click "One Data Confluence Test.exe". Keep the entire folder together. No separate Java, Node.js, or server installation is needed.
+RUN
+Extract the entire ZIP. Open One Data Confluence Test and run One Data Confluence Test.exe. Keep all included files together. Java and the local server are included; no Node, Java or development tools need installing. Close other One Data versions first. This version uses the existing Confluence test profile. Follow your organization's policy for running unsigned test apps.
 
-MAC
-Use the matching Mac build (arm64 for Apple silicon, x64 for Intel). Open the DMG and copy the app to Applications. Mac builds need a Mac build runner; the Windows ZIP does not run on macOS.
+ADD SOURCES
+The main screen opens after the splash. Use Sign in to Confluence with your own organization account (VPN/network access may be needed). Add full page links containing pageId=123 or /pages/123/ using the Confluence page link field. This test build supports pages on https://cps.confluence.agile.vodafone.com only, up to 20 pages. Every page retains its own status. No credentials are embedded.
+Click Add JSON / Excel files and select one or more files. Files are added alongside all existing page and file sources. Remove a source to remove its rows.
+JSON accepts an array of row objects, or an object with rows/data containing that array. Nested values become JSON strings. Excel accepts XLSX/XLS and loads every non-empty worksheet; put headers in row 1. Maximum 10 MB per file, 10,000 rows and 200 columns per file source; combined maximum 60 sources, 50,000 rows and 300 data columns.
 
-FIRST USE
-1. Connect to your organization network/VPN if Confluence requires it.
-2. After the splash screen, the Confluence sign-in window opens automatically. The main screen stays hidden until you connect or choose a saved offline copy.
-3. Complete Vodafone/Microsoft sign-in and MFA using your own account in the separate sign-in window.
-4. The app reads page 346517143 after sign-in and opens the main screen automatically when data is ready. If sign-in is cancelled or fails, choose Retry sign-in. If a previous successful copy exists, choose Use offline copy; its download date is shown. No cached copy means sign-in is required.
-5. Confluence refreshes every five minutes while the app is open. The card shows the last successful download and page version.
+COMBINED TABLE
+Matching headers are merged ignoring case, spaces and punctuation. Known aliases also combine: MSISDN/Username, Country/Market, Service/Service type, Env/Environment, Pass/Password. The first source's header label is displayed. Other distinct headers become separate columns. Missing or empty values are actual null and display as null. Zero and false are preserved. A Source column identifies each row. Rows are appended, not deduplicated; the same account in two sources remains two rows. Store identifiers with leading zeroes as Excel text or JSON strings.
+Confluence tables need a first header row with at least two named columns and a data row. All qualifying tables on each page are read. Avoid unrelated layout tables on your data pages. Ambiguous headers within a file are rejected so data is not silently overwritten.
 
-SOURCE
-https://cps.confluence.agile.vodafone.com/pages/viewpage.action?pageId=346517143
+FILTERS, SEARCH AND COPYING
+Filters are in the left sidebar. Open Choose filter columns to select any combined header. Labels and values come from the current data. Small value lists use clickable buttons; identifiers, sensitive columns and lists over 30 values use text search. Click a selected value again to clear it. Different filters apply together. The null button matches missing values. Your chosen column names are remembered; filter values are not.
+Smart search stays in the table card. It searches combined rows locally and supports existing request wording, common spelling corrections and column-specific queries. No LLM is connected. Clearing search and filters are separate actions.
+Select visible text and use Ctrl+C, or use the copy button on a table cell. Successful copying displays Copied. Passwords remain visible on one line as requested.
 
-TABLE COLUMNS
-User name/MSISDN, Pass, User type, Service Type, Used in Which Journey.
-Later you can add Market, Environment, Role, Payment Type, Account ID, Service ID.
-Column order is flexible. Missing values stay blank. MSISDNs keep leading zeroes. Passwords are masked; Show reveals one on demand. Quick search includes service types and journeys, but excludes passwords.
-The existing smart-search parser understands its existing market/environment/payment vocabulary. New journey phrases can be searched with the quick-search box; this test does not add an external AI service.
+REFRESH AND STORAGE
+Confluence refreshes every five minutes after sign-in. Each unavailable page retains its encrypted last successful copy; other pages can still refresh. A confirmed permission denial clears that page's data. Sign out & clear copies clears downloaded data while retaining page links. Switching authenticated accounts clears the previous account's data. Uploaded JSON/Excel files remain only for the current app session; upload them again after restart. They are not sent to Confluence or an AI service. Removing a page removes its saved copy.
 
-OFFLINE / SIGN-OUT
-After a successful download, the app stores an encrypted copy in this test app's per-user local profile using Windows DPAPI or macOS Keychain-backed encryption. If Confluence is unavailable, the last successful copy remains visible with a stale-data message. After restarting, that same OS user can view their saved copy offline; sign in again for live updates. If encrypted storage is unavailable, the app keeps data only in memory and tells you so.
-Sign out clears the local copy and the app's login session. A confirmed access denial also clears the copy. Offline access cannot detect a permission change until the app reconnects.
-Each teammate must use their own Windows/Mac login and authenticate Confluence themselves. No Confluence passwords, tokens, cookies, or downloaded team data are included in this package. Login cookies last only for the running app session.
-
-PERSONAL FILES
-You can still upload a personal Excel file. It stays active while Confluence refreshes in the background. Click "Use Confluence data" to switch back.
-
-TEST LIMITATIONS
-This is a separate test app/profile; the original working app and ZIP are retained. Live page parsing and your organization's embedded-browser SSO policy need validation with an authorized teammate. If corporate sign-in blocks embedded apps, use the approved error details to arrange an OAuth/SSO integration with IT; do not bypass the policy. This build reads Confluence and never writes to the page.
-The app is unsigned; follow your organization's deployment policy.
-
-This release adds Splash -> automatic sign-in -> main screen. Session expiry inside the workspace shows a sign-in notice and retains the last data. Signing out returns to the sign-in screen. Replaying the splash while connected does not trigger another login.
+TEST FILES
+Open the Test files folder and follow TEST-INSTRUCTIONS.txt. The synthetic Excel and JSON files together produce 8 rows and 13 columns when no Confluence rows have downloaded.
+Live organization sign-in and page permissions must be checked with your own authorized account. This ZIP is for Windows x64; it does not run on macOS.

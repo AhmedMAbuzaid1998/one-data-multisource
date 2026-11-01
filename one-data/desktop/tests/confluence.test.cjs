@@ -114,3 +114,13 @@ test('offline entry keeps the copy and prevents pending login refresh from chang
   assert.equal(service.active, false)
   assert.equal(source.saved.owner, 'tester-a')
 })
+
+ test('unknown and duplicate headers preserve their values without colliding with internal fields', () => {
+  const rows = parseConfluenceTable('<table><tr><th>MSISDN</th><th>Used in which market</th><th>Offer</th><th>Offer</th><th>id</th></tr><tr><td>001</td><td>New Market</td><td>Upgrade</td><td>Pega</td><td>external</td></tr></table>')
+  const row = rows[0]
+  assert.equal(row.id, 1)
+  assert.equal(row.columns.length, 5)
+  assert.equal(new Set(row.columns.map(column => column.key)).size, 5)
+  assert.equal(row[row.columns[1].key], 'New Market')
+  assert.equal(row[row.columns[3].key], 'Pega')
+})

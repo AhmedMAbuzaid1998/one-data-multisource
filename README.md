@@ -1,27 +1,65 @@
-# One Data demo
+# One Data
 
-One Data is a test user directory and Jira request builder. This demo starts with sample users from `one-data/backend/src/main/resources/testdata.xlsx`. Team members can also upload their own Excel workbook for filtering and search in the current browser session.
+A desktop test-data directory that combines Confluence tables, Excel workbooks and JSON files into one searchable workspace, with a Jira request-content builder.
 
-## Run locally
+**Latest working version: `1.2.0-multisource.1` (manual Confluence sign-in).** Windows x64 has been tested as a complete-folder ZIP. macOS builds are configured but require separate platform verification. This is a demo/test application, not an approved enterprise deployment.
 
-Install Java 17, Maven, and Node.js 18 or newer.
+## Start here
 
-1. In `one-data/backend`, run `mvn spring-boot:run`.
-2. In `one-data/frontend`, run `npm ci` and then `npm run dev`.
-3. Open `http://localhost:5173` or `http://127.0.0.1:5173`.
+[Download the Windows test release](https://github.com/AhmedMAbuzaid1998/one-data-multisource/releases/tag/v1.2.0-multisource.1). Extract the entire ZIP and run `One Data Confluence Test.exe`; keep all bundled files together. No development tools are required to use it.
 
-The backend runs on port 8080. The frontend development server proxies `/api` requests to it. The Windows `start-backend.bat` and `start-frontend.bat` scripts run the same commands.
+| You want to… | Read this |
+| --- | --- |
+| Use the desktop application | [User guide](one-data/desktop/CONFLUENCE-TEST-INSTRUCTIONS.txt) |
+| Run or change the code | [Development setup](docs/DEVELOPMENT.md) |
+| Understand the high-level design | [Architecture](docs/ARCHITECTURE.md) |
+| Import data and try the features | [Data formats and samples](samples/README.md) |
+| Contribute a change | [Contributing](CONTRIBUTING.md) |
+| Build and distribute a version | [Release guide](docs/RELEASING.md) |
+| Report a security issue | [Security guidance](SECURITY.md) |
 
-## Demo features
+## Features and boundaries
 
-- Browse sample test users, filter by attributes, search, sort, and paginate.
-- Describe test data in plain language to fill the search filters.
-- Upload a personal `.xlsx` or `.xls` file with these first-sheet columns: `Username`, `Market`, `Environment`, `User Type`, `Role`, `Payment Type`, `Account ID`, `Service ID`.
-- Draft a Jira-ready test data request and edit its scenario before copying it.
-- Switch between light and dark mode.
+- Multiple simultaneous Confluence pages and JSON/XLSX/XLS uploads, including all non-empty Excel sheets.
+- Matching headers and aliases form one table; missing values are actual `null`. Every row retains its source; duplicate accounts remain separate rows.
+- Selectable dynamic filters, sorting, pagination, local smart search and copy feedback.
+- Vodafone-inspired styling, startup animation, light/dark modes and copyable Jira request content.
+- Individual Confluence sign-in, five-minute refresh and an encrypted last successful copy for unavailable pages.
 
-Personal uploads are parsed in memory for the response and are not saved to the shared dataset. The token UI is currently hidden for the demo, while its code remains in the project.
+Smart Search currently uses local rules, not an LLM. Direct Jira creation is not connected. Token generation is hidden and its backend is a demo stub. Uploaded files last only for the current session. Confluence links must use the configured organization host. Password columns are intentionally visible.
 
-## Desktop app
+## Quick developer start
 
-See [desktop build and installation instructions](one-data/desktop/README.md). Packaged Windows and macOS apps bundle the UI, backend, and Java runtime, but the shared workbook is not live-synced in this demo.
+Install **Node.js 22**, **JDK 17**, and **Maven 3.9+**. Set `JAVA_HOME` to the JDK and ensure `node`, `npm`, `java`, and `mvn` are on PATH. From the repository root:
+
+```sh
+git clone https://github.com/AhmedMAbuzaid1998/one-data-multisource.git
+cd one-data-multisource
+npm ci --prefix one-data/frontend
+npm ci --prefix one-data/desktop
+npm --prefix one-data/desktop test
+npm --prefix one-data/desktop start
+```
+
+The last command builds React, packages Spring Boot, creates a Java runtime and launches Electron. Initial dependency installation needs network access. No Confluence account is needed to test the [synthetic Excel and JSON files](samples/README.md).
+
+For frontend-only development, run `mvn -f one-data/backend/pom.xml spring-boot:run` and, in another terminal, `npm --prefix one-data/frontend run dev`. Open `http://localhost:5173`. Browser mode uses the original sample dataset and has no Electron Confluence bridge.
+
+## Structure and technologies
+
+```text
+one-data/frontend/   React 18, TypeScript, Vite, CSS; UI and combined-data logic
+one-data/backend/    Java 17, Spring Boot, Apache POI; local API and Excel import
+one-data/desktop/    Electron; startup, Confluence, cache and packaging
+samples/            Synthetic input files and expected results
+docs/               Developer, architecture and release documentation
+.github/            CI, desktop builds, issue and pull-request templates
+```
+
+H2/JPA support the original sample backend; they are not a shared database for the combined workspace. The desktop backend binds only to localhost and uses a per-launch token. See [Architecture](docs/ARCHITECTURE.md).
+
+## Contributing and distribution
+
+Use a feature branch or fork, run the documented checks, and open a pull request. Do not commit real accounts, uploaded workbooks, authentication tokens, caches or personal documents. Source belongs in Git; packaged applications belong in GitHub Releases or build artifacts.
+
+No open-source license has been selected. Maintainers must resolve ownership, licensing and branding permissions before describing this as open source or redistributing it beyond its authorized scope. See [Contributing](CONTRIBUTING.md).

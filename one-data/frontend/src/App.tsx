@@ -1,15 +1,18 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import SplashScreen from './components/SplashScreen'
 import BrandMark from './components/BrandMark'
-import FilterPanel, { FilterOptions } from './components/FilterPanel'
+import DynamicFilters from './components/DynamicFilters'
+import { tableColumns, matchesSearch, matchesFilters } from './services/tableData'
 import UserTable from './components/UserTable'
 import SmartSearch from './components/SmartSearch'
 import TestDataRequest from './components/TestDataRequest'
-import DatasetUpload from './components/DatasetUpload'
-import ConfluenceSource from './components/ConfluenceSource'
+import SourceManager from './components/SourceManager'
+import { Dataset, harmonize } from './services/datasets'
+import CopyFeedback from './components/CopyFeedback'
 import StartupSignIn from './components/StartupSignIn'
 import { fetchUsers, fetchStats, Filters, TestUser, ConfluenceState } from './services/api'
 
+const EMPTY_ROWS: TestUser[] = []
 const EMPTY_FILTERS: Filters = { market: '', environment: '', userType: '', role: '', paymentType: '', accountId: '', serviceId: '' }
 function initialTheme(): 'light' | 'dark' {
   try {
@@ -26,19 +29,21 @@ export default function App() {
   const [search, setSearch] = useState('')
   const [view, setView] = useState<'directory' | 'request'>('directory')
   const [users, setUsers] = useState<TestUser[]>([])
-  const [personalUsers, setPersonalUsers] = useState<TestUser[] | null>(null)
-  const [personalFileName, setPersonalFileName] = useState<string | null>(null)
+  const [files, setFiles] = useState<Dataset[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [total, setTotal] = useState<number | null>(null)
   const [connection, setConnection] = useState<'checking' | 'online' | 'offline'>('checking')
   const [confluence, setConfluence] = useState<ConfluenceState | null>(null)
   const desktop = Boolean(window.confluenceDesktop)
-  const [workspaceOpen, setWorkspaceOpen] = useState(!desktop)
+  const startupLogin = desktop && window.confluenceDesktop?.startupMode !== 'manual'
+  const [workspaceOpen, setWorkspaceOpen] = useState(!startupLogin)
   const [signInPending, setSignInPending] = useState(false)
   const [signInError, setSignInError] = useState('')
   const automaticSignInStarted = useRef(false)
-  const localUsers = personalUsers ?? (desktop ? confluence?.rows ?? [] : null)
+  const pageSources = useMemo<Dataset[]>(() => desktop ? confluence?.sources?.map(source => ({id:source.id,name:source.title || `Confluence ${source.id}`,rows:source.rows})) ?? [{id:'confluence',name:'Confluence',rows:confluence?.rows ?? EMPTY_ROWS}] : [{id:'main',name:'Main dataset',rows:users}], [desktop,confluence,users])
+  const combined = useMemo(() => {try{return {rows:harmonize([...pageSources,...files]),error:''}}catch(error){return {rows:EMPTY_ROWS,error:error instanceof Error?error.message:'Sources could not be combined.'}}},[pageSources,files])
+  const localUsers = combined.rows
   const requestId = useRef(0)
   const finishIntro = useCallback(() => setShowSplash(false), [])
 
@@ -73,9 +78,7 @@ export default function App() {
       setConfluence(state)
       if (state.status === 'live') setWorkspaceOpen(true)
       if (state.status === 'signed-out' || state.status === 'denied') {
-        setWorkspaceOpen(false)
-        setPersonalUsers(null)
-        setPersonalFileName(null)
+        setWorkspaceOpen(!startupLogin)
       }
       setConnection(state.status === 'live' ? 'online' : state.status === 'refreshing' ? 'checking' : 'offline')
     }
@@ -91,11 +94,11 @@ export default function App() {
     finally { setSignInPending(false) }
   }, [])
   useEffect(() => {
-    if (desktop && !showSplash && confluence && !workspaceOpen && !automaticSignInStarted.current) {
+    if (startupLogin && !showSplash && confluence && !workspaceOpen && !automaticSignInStarted.current) {
       automaticSignInStarted.current = true
       void requestSignIn()
     }
-  }, [desktop, showSplash, confluence, workspaceOpen, requestSignIn])
+  }, [startupLogin, showSplash, confluence, workspaceOpen, requestSignIn])
   async function openOfflineCopy() {
     setSignInPending(true)
     setSignInError('')
@@ -107,66 +110,27 @@ export default function App() {
     finally { setSignInPending(false) }
   }
   useEffect(() => {
-    if (personalUsers === null && !desktop) loadUsers(filters)
+    if (!desktop) loadUsers({})
     else { setLoading(false); setError('') }
     return () => { requestId.current++ }
-  }, [filters, loadUsers, personalUsers, desktop])
+  }, [loadUsers, desktop])
   const activeFilterCount = Object.values(filters).filter(Boolean).length
-  const sourceUsers = useMemo(() => {
-    if (localUsers === null) return users
-    const same = (actual: string, expected?: string) => !expected || actual.toLowerCase() === expected.toLowerCase()
-    const includes = (actual: string, expected?: string) => !expected || actual.toLowerCase().includes(expected.toLowerCase())
-    return localUsers.filter(user =>
-      same(user.market, filters.market) && same(user.environment, filters.environment) &&
-      same(user.userType, filters.userType) && same(user.role, filters.role) &&
-      same(user.paymentType, filters.paymentType) && includes(user.accountId, filters.accountId) &&
-      includes(user.serviceId, filters.serviceId)
-    )
-  }, [users, localUsers, filters])
-  const visibleUsers = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    if (!query) return sourceUsers
-    return sourceUsers.filter(user => Object.entries(user).some(([key, value]) => key !== 'id' && key !== 'password' && String(value ?? '').toLowerCase().includes(query)))
-  }, [sourceUsers, search])
-  const personalFilterOptions = useMemo<FilterOptions | undefined>(() => {
-    if (localUsers === null) return undefined
-    const unique = (key: keyof TestUser) => Array.from(new Set(localUsers.map(user => String(user[key] ?? '').trim()).filter(Boolean)))
-    return {
-      market: unique('market'), environment: unique('environment'), userType: unique('userType'),
-      role: unique('role').filter(role => role.toUpperCase() !== 'N/A'), paymentType: unique('paymentType'),
-    }
-  }, [localUsers])
+  const allRows = localUsers ?? users
+  const columns = useMemo(() => tableColumns(allRows), [allRows])
+  const sourceUsers = useMemo(() => allRows.filter(row => matchesFilters(row, filters, columns)), [allRows, filters, columns])
+  const visibleUsers = useMemo(() => sourceUsers.filter(row => matchesSearch(row, search, columns)), [sourceUsers, search, columns])
+  useEffect(() => {
+    setFilters(current => Object.fromEntries(Object.entries(current).filter(([key]) => columns.some(column => column.key === key))))
+  }, [columns])
 
   function removeFilter(key: keyof Filters) {
     const next = { ...filters, [key]: '' }
-    if (key === 'userType') next.role = ''
     setFilters(next)
-  }
-
-  function applySmartSearch(parsed: Filters) {
-    setFilters({ ...EMPTY_FILTERS, ...parsed })
-    setSearch('')
-  }
-
-  function usePersonalData(importedUsers: TestUser[], fileName: string) {
-    requestId.current++
-    setPersonalUsers(importedUsers)
-    setPersonalFileName(fileName)
-    setFilters(EMPTY_FILTERS)
-    setSearch('')
-    setLoading(false)
-    setError('')
-  }
-
-  function useMainData() {
-    setPersonalUsers(null)
-    setPersonalFileName(null)
-    setFilters(EMPTY_FILTERS)
-    setSearch('')
   }
 
   return (
     <>
+      <CopyFeedback />
       {showSplash && <SplashScreen onDone={finishIntro} />}
       {!showSplash && !workspaceOpen && <StartupSignIn state={confluence} error={signInError} pending={signInPending} onSignIn={requestSignIn} onOffline={openOfflineCopy} />}
       {!showSplash && workspaceOpen && <div id="app-shell" className="app-shell">
@@ -185,23 +149,22 @@ export default function App() {
         <main id="main">
           <section id="hero-banner" className="hero">
             <div id="hero-copy" className="hero-copy"><p id="hero-kicker" className="eyebrow">ONE PLATFORM. YOUR TEST DATA.</p><h1 id="hero-title">Less searching.<br id="hero-title-break" /><strong id="hero-title-emphasis">More testing.</strong></h1><p id="hero-description">Find the right users for your next test.<br id="hero-description-break" />All your markets and environments, in one place.</p></div>
-            <div id="hero-stat" className="hero-stat"><span id="hero-total" className="stat-number">{localUsers?.length ?? total ?? '—'}<span id="hero-total-arrow">↗</span></span><span id="hero-total-label">{personalUsers ? 'users in your personal file' : desktop ? 'users from Confluence' : 'test users in your workspace'}</span><div id="hero-stat-rule" className="stat-rule" /><span id="hero-stat-note" className="stat-note">{personalUsers ? 'Personal dataset active' : desktop ? 'Confluence test version' : 'Ready for your next scenario'}</span></div>
+            <div id="hero-stat" className="hero-stat"><span id="hero-total" className="stat-number">{localUsers?.length ?? total ?? '—'}<span id="hero-total-arrow">↗</span></span><span id="hero-total-label">users across your sources</span><div id="hero-stat-rule" className="stat-rule" /><span id="hero-stat-note" className="stat-note">{files.length + pageSources.filter(source=>source.rows.length).length} active sources</span></div>
             <span id="hero-ring" className="hero-ring" aria-hidden="true" />
           </section>
           {view === 'directory' ? <section id="directory-view">
             <div id="directory-heading" className="section-heading"><div id="directory-heading-copy"><p id="directory-kicker" className="eyebrow">EXPLORE YOUR DATA</p><h2 id="directory-title">Test user directory</h2></div><button id="replay-intro" className="text-button" onClick={() => setShowSplash(true)}>Replay intro ↗</button></div>
-            <SmartSearch onApply={applySmartSearch} />
-            <>{desktop && <ConfluenceSource state={confluence} personal={personalUsers !== null} />}</>
-            <DatasetUpload confluence={desktop} personalFileName={personalFileName} personalRowCount={personalUsers?.length || 0} onLoaded={usePersonalData} onUseMain={useMainData} />
+            <SourceManager state={confluence} files={files} onAdd={sources=>setFiles(current=>[...current,...sources])} onRemove={id=>setFiles(current=>current.filter(source=>source.id!==id))} />
             <div id="directory-layout" className="directory-layout">
-              <FilterPanel filters={filters} onChange={setFilters} onReset={() => setFilters(EMPTY_FILTERS)} options={personalFilterOptions} />
+              <DynamicFilters rows={allRows} columns={columns} filters={filters} onChange={setFilters} onReset={() => setFilters(EMPTY_FILTERS)} />
               <section id="results-card" className="results-card" aria-label="Test user results" aria-busy={loading}>
                 <div id="results-toolbar" className="results-toolbar">
-                  <div id="results-summary"><h3 id="results-title">Available users <span id="results-count" className="count-pill">{loading ? '…' : visibleUsers.length}</span></h3><p id="results-description">{activeFilterCount ? `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'} · ${personalUsers ? 'Personal file' : desktop ? 'Confluence' : 'Main data'}` : `Browsing ${personalUsers ? 'your personal file' : desktop ? 'the Confluence table' : 'the main team data'}.`}</p></div>
-                  <div id="results-actions" className="results-actions"><label id="quick-search-label" className="quick-search"><span id="quick-search-icon" aria-hidden="true">⌕</span><input id="quick-search-input" type="search" placeholder="Search users, IDs, roles…" aria-label="Search current results" value={search} onChange={e => setSearch(e.target.value)} />{search && <button id="quick-search-clear" type="button" onClick={() => setSearch('')} aria-label="Clear search">×</button>}</label><button id="results-refresh" className="refresh-button" onClick={() => { if (desktop) window.confluenceDesktop?.refresh().catch(() => setError('Refresh failed')); else loadUsers(filters) }} disabled={loading || personalUsers !== null || confluence?.status === 'refreshing'}>↻ Refresh</button></div>
+                  <div id="results-summary"><h3 id="results-title">Available users <span id="results-count" className="count-pill">{loading ? '…' : visibleUsers.length}</span></h3><p id="results-description">{activeFilterCount ? `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'} · Combined sources` : `Browsing the combined table.`}</p></div>
+                  <div id="results-actions" className="results-actions"><label id="quick-search-label" className="quick-search"><span id="quick-search-icon" aria-hidden="true">⌕</span><input id="quick-search-input" type="search" placeholder="Search any table value…" aria-label="Search current results" value={search} onChange={e => setSearch(e.target.value)} />{search && <button id="quick-search-clear" type="button" onClick={() => setSearch('')} aria-label="Clear search">×</button>}</label><button id="results-refresh" className="refresh-button" onClick={() => { if (desktop) window.confluenceDesktop?.refresh().catch(() => setError('Refresh failed')); else loadUsers({}) }} disabled={loading || confluence?.status === 'refreshing'}>↻ Refresh</button></div>
                 </div>
-                {activeFilterCount > 0 && <div id="active-filters" className="active-filters" aria-label="Active filters"><span id="active-filters-label">Filtered by</span>{Object.entries(filters).filter(([, value]) => value).map(([key, value]) => <button id={`active-filter-${key}`} type="button" key={key} onClick={() => removeFilter(key as keyof Filters)}>{value}<span id={`active-filter-${key}-remove`} aria-hidden="true">×</span></button>)}<button id="active-filters-clear" className="clear-inline" type="button" onClick={() => setFilters(EMPTY_FILTERS)}>Clear all</button></div>}
-                <UserTable users={visibleUsers} loading={loading} error={error} tokenEnabled={personalUsers === null && !desktop} />
+                <SmartSearch query={search} onQuery={setSearch} rows={allRows} columns={columns} />
+                {activeFilterCount > 0 && <div id="active-filters" className="active-filters" aria-label="Active filters"><span id="active-filters-label">Filtered by</span>{Object.entries(filters).filter(([, value]) => value).map(([key, value]) => <button id={`active-filter-${key}`} type="button" key={key} onClick={() => removeFilter(key as keyof Filters)}>{columns.find(column => column.key === key)?.sensitive ? '••••••••' : value === '__NULL__' ? 'null' : value?.replace(/^=/,'')}<span id={`active-filter-${key}-remove`} aria-hidden="true">×</span></button>)}<button id="active-filters-clear" className="clear-inline" type="button" onClick={() => setFilters(EMPTY_FILTERS)}>Clear all</button></div>}
+                <UserTable columns={columns} users={visibleUsers} loading={loading} error={combined.error || error} tokenEnabled={false} />
               </section>
             </div>
           </section> : <TestDataRequest />}

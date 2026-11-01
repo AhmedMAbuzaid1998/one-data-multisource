@@ -1,4 +1,4 @@
-name: Confluence test desktop builds
+name: Desktop builds
 
 on:
   workflow_dispatch:
@@ -45,19 +45,21 @@ jobs:
         if: matrix.platform == 'win'
         shell: pwsh
         run: |
-          $release = 'one-data/desktop/release-confluence-login'
+          $release = 'one-data/desktop/release-multisource1'
           $folder = Join-Path $release 'One Data Confluence Test'
           Copy-Item -LiteralPath (Join-Path $release 'win-unpacked') -Destination $folder -Recurse
-          Copy-Item -LiteralPath 'one-data/desktop/CONFLUENCE-TEST-INSTRUCTIONS.txt' -Destination (Join-Path $release 'START HERE.txt')
-          Compress-Archive -Path $folder,(Join-Path $release 'START HERE.txt') -DestinationPath (Join-Path $release 'One Data Confluence Test 1.1.0-confluence.2 Windows.zip')
+          Copy-Item -LiteralPath 'one-data/desktop/CONFLUENCE-TEST-INSTRUCTIONS.txt' -Destination (Join-Path $folder 'START HERE.txt')
+          Copy-Item -LiteralPath 'samples' -Destination (Join-Path $folder 'Test files') -Recurse
+          Compress-Archive -Path $folder -DestinationPath (Join-Path $release 'One Data Confluence Test 1.2.0-multisource.1 Windows.zip')
       - name: Save installer artifacts
         uses: actions/upload-artifact@v4
         with:
           name: one-data-confluence-test-${{ matrix.platform }}-${{ matrix.architecture }}
           path: |
-            one-data/desktop/release-confluence-login/*.exe
-            one-data/desktop/release-confluence-login/*.dmg
-            one-data/desktop/release-confluence-login/*.zip
+            one-data/desktop/release-multisource1/*.exe
+            one-data/desktop/release-multisource1/*.dmg
+            one-data/desktop/release-multisource1/*.zip
             one-data/desktop/CONFLUENCE-TEST-INSTRUCTIONS.txt
+            samples/
           if-no-files-found: error
           retention-days: 14

@@ -1,6 +1,6 @@
 {
   "name": "one-data-confluence-test",
-  "version": "1.1.0-confluence.2",
+  "version": "1.2.0-multisource.1",
   "private": true,
   "description": "One Data desktop app",
   "main": "main.cjs",
@@ -10,7 +10,8 @@
     "dist:win": "npm run prepare:bundle && electron-builder --win nsis",
     "dist:mac": "npm run prepare:bundle && electron-builder --mac dmg zip",
     "pack": "npm run prepare:bundle && electron-builder --dir",
-    "test": "node --test tests/*.test.cjs"
+    "test": "node --test tests/*.test.cjs",
+    "pack:variants": "npm run prepare:bundle && node scripts/build-variants.mjs"
   },
   "devDependencies": {
     "electron": "44.4.3",
@@ -21,7 +22,7 @@
     "productName": "One Data Confluence Test",
     "asar": true,
     "directories": {
-      "output": "release-confluence-login"
+      "output": "release-multisource1"
     },
     "files": [
       "main.cjs",
@@ -60,5 +61,6 @@
   },
   "dependencies": {
     "parse5": "7.3.0"
-  }
+  },
+  "startupMode": "manual"
 }

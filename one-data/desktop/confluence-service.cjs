@@ -5,8 +5,8 @@ const PAGE_URL = `${ORIGIN}/pages/viewpage.action?pageId=${PAGE_ID}`
 const REFRESH_MS = 5 * 60 * 1000
 
 class ConfluenceService {
-  constructor({ fetchJson, cache, notify, now = () => new Date().toISOString() }) {
-    Object.assign(this, { fetchJson, cache, notify, now })
+  constructor({ fetchJson, cache, notify, pageId = PAGE_ID, now = () => new Date().toISOString() }) {
+    Object.assign(this, { fetchJson, cache, notify, now, pageId })
     this.epoch = 0
     this.busy = false
     this.active = false
@@ -17,7 +17,7 @@ class ConfluenceService {
   async initialize() {
     try {
       const saved = await this.cache.read()
-      if (saved && saved.pageId === PAGE_ID && saved.owner && Array.isArray(saved.rows) && saved.rows.length) {
+      if (saved && saved.pageId === this.pageId && saved.owner && Array.isArray(saved.rows) && saved.rows.length) {
         this.publish({ rows: saved.rows, owner: saved.owner, lastSuccess: saved.lastSuccess, version: saved.version, title: saved.title,
           status: 'cached', message: 'Showing your last encrypted copy. Sign in for live updates; this copy may be out of date.' })
       }
@@ -38,13 +38,13 @@ class ConfluenceService {
         this.publish({ rows: [], lastSuccess: null, version: null, title: '', owner })
         await this.cache.clear()
       }
-      const page = await this.fetchJson(`/rest/api/content/${PAGE_ID}?expand=body.view,version`)
+      const page = await this.fetchJson(`/rest/api/content/${this.pageId}?expand=body.view,version`)
       if (epoch !== this.epoch) return this.snapshot()
-      if (String(page.id) !== PAGE_ID) throw new Error('Confluence returned a different page. The previous copy was kept.')
+      if (String(page.id) !== this.pageId) throw new Error('Confluence returned a different page. The previous copy was kept.')
       const rows = parseConfluenceTable(page.body?.view?.value)
       const update = { rows, owner, title: page.title || 'Confluence test data', version: page.version?.number ?? null, lastSuccess: this.now() }
       let message = 'Up to date. Automatic refresh every 5 minutes.'
-      try { await this.cache.write({ pageId: PAGE_ID, ...update }) }
+      try { await this.cache.write({ pageId: this.pageId, ...update }) }
       catch { message = 'Live data loaded. Encrypted offline storage is unavailable; this copy is available only until the app closes.' }
       if (epoch !== this.epoch) { await this.cache.clear(); return this.snapshot() }
       return this.publish({ ...update, status: 'live', message })

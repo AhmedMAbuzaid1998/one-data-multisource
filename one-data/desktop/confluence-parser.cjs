@@ -53,20 +53,31 @@ function parseConfluenceTable(html) {
   if (typeof html !== 'string' || Buffer.byteLength(html) > 5 * 1024 * 1024) throw new Error('The page content is missing or too large.')
   const records = []
   for (const table of descendants(parseFragment(html), 'table')) {
-    let mapping
+    let mapping, originalHeaders
     for (const cells of grid(table)) {
       const candidate = cells.map(value => Object.keys(aliases).find(key => aliases[key].includes(normalize(value || ''))))
-      // Ignore unrelated tables and repeated header rows. A username plus a known data column is required.
-      if (candidate.includes('username') && candidate.filter(Boolean).length >= 2) { mapping = candidate; continue }
+      // The first nonempty header row defines each table, including unknown columns.
+      if ((!mapping && cells.filter(value => value?.trim()).length >= 2) || (mapping && cells.length === originalHeaders.length && cells.every((value, index) => normalize(value || '') === normalize(originalHeaders[index] || '')))) {
+        originalHeaders = cells
+        const used = new Set()
+        const labels = new Map()
+        mapping = cells.map((label, index) => {
+          let key = candidate[index] || `extra_${Buffer.from(label || `Column ${index + 1}`).toString('hex')}`
+          if (used.has(key)) key = `${key}_${index}`
+          used.add(key)
+          const count = (labels.get(label) || 0) + 1; labels.set(label, count)
+          return { key, label: count > 1 ? `${label} (${count})` : label || `Column ${index + 1}`, sensitive: candidate[index] === 'password' || /password|secret|token|credential/i.test(label) }
+        })
+        continue
+      }
       if (!mapping || cells.every(cell => !cell)) continue
       const record = Object.fromEntries(Object.keys(aliases).map(key => [key, '']))
-      mapping.forEach((key, index) => { if (key) record[key] = (cells[index] || '').trim() })
-      if (!record.username) continue
-      records.push({ id: records.length + 1, ...record })
+      mapping.forEach(({ key }, index) => { record[key] = (cells[index] || '').trim() })
+      records.push({ id: records.length + 1, ...record, columns: mapping })
       if (records.length > 10000) throw new Error('The page contains too many users (maximum 10,000).')
     }
   }
-  if (!records.length) throw new Error('No usable test-data table found. Keep a Username/MSISDN column and at least one other supported column. The previous copy was kept.')
+  if (!records.length) throw new Error('No usable table found. Use a header row with at least two named columns and a data row. The previous copy was kept.')
   return records
 }
 module.exports = { parseConfluenceTable }

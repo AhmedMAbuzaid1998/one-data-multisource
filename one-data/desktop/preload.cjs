@@ -1,5 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron')
 contextBridge.exposeInMainWorld('confluenceDesktop', {
+  startupMode: process.argv.includes('--one-data-manual-login') ? 'manual' : 'automatic',
+  addPage: url => ipcRenderer.invoke('confluence:add-page', url),
+  removePage: id => ipcRenderer.invoke('confluence:remove-page', id),
   getState: () => ipcRenderer.invoke('confluence:state'),
   signIn: () => ipcRenderer.invoke('confluence:sign-in'),
   refresh: () => ipcRenderer.invoke('confluence:refresh'),

@@ -1,6 +1,9 @@
 const BASE = '/api'
+export interface DataColumn { key: string; label: string; sensitive?: boolean }
 
 export interface TestUser {
+  [key: string]: string | number | boolean | null | DataColumn[] | undefined
+  columns?: DataColumn[]
   id: number
   username: string
   market: string
@@ -16,6 +19,7 @@ export interface TestUser {
 }
 
 export interface ConfluenceState {
+  sources?: Array<ConfluenceState & { id: string }>
   loginOpen?: boolean
   rows: TestUser[]
   status: 'signed-out' | 'sign-in-required' | 'refreshing' | 'live' | 'cached' | 'error' | 'denied'
@@ -30,6 +34,9 @@ export interface ConfluenceState {
 declare global {
   interface Window {
     confluenceDesktop?: {
+      startupMode?: string
+      addPage: (url: string) => Promise<ConfluenceState>
+      removePage: (id: string) => Promise<ConfluenceState>
       getState: () => Promise<ConfluenceState>
       signIn: () => Promise<ConfluenceState>
       refresh: () => Promise<ConfluenceState>
@@ -50,6 +57,7 @@ export interface TokenResponse {
 }
 
 export interface Filters {
+  [key: string]: string | undefined
   market?: string
   environment?: string
   userType?: string

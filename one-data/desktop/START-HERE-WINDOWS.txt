@@ -1,12 +1,25 @@
-ONE DATA DESKTOP - WINDOWS
+ONE DATA - 1.2.0-multisource.1 - WINDOWS - MANUAL SIGN-IN
 
-1. Extract the complete ZIP to a folder on your computer.
-2. Open the extracted "One Data" folder.
-3. Double-click "One Data.exe" inside it. Keep the folder and all its contents together; the app needs its bundled resources and Java runtime.
-4. Wait for the app window to open (the first launch can take up to 90 seconds). Close the app window when done.
+RUN
+Extract the entire ZIP. Open One Data Confluence Test and run One Data Confluence Test.exe. Keep all included files together. Java and the local server are included; no Node, Java or development tools need installing. Close other One Data versions first. This version uses the existing Confluence test profile. Follow your organization's policy for running unsigned test apps.
 
-No Java, Node.js, Maven, or separate web server needs to be installed. The bundled sample workbook works offline. Use "Upload personal file" in the app for your own Excel workbook during the current session.
+ADD SOURCES
+The main screen opens after the splash. Use Sign in to Confluence with your own organization account (VPN/network access may be needed). Add full page links containing pageId=123 or /pages/123/ using the Confluence page link field. This test build supports pages on https://cps.confluence.agile.vodafone.com only, up to 20 pages. Every page retains its own status. No credentials are embedded.
+Click Add JSON / Excel files and select one or more files. Files are added alongside all existing page and file sources. Remove a source to remove its rows.
+JSON accepts an array of row objects, or an object with rows/data containing that array. Nested values become JSON strings. Excel accepts XLSX/XLS and loads every non-empty worksheet; put headers in row 1. Maximum 10 MB per file, 10,000 rows and 200 columns per file source; combined maximum 60 sources, 50,000 rows and 300 data columns.
 
-If an older One Data error dialog is still open, close it before launching this version. If Windows still focuses an old instance, restart Windows and run One Data.exe from this extracted folder.
+COMBINED TABLE
+Matching headers are merged ignoring case, spaces and punctuation. Known aliases also combine: MSISDN/Username, Country/Market, Service/Service type, Env/Environment, Pass/Password. The first source's header label is displayed. Other distinct headers become separate columns. Missing or empty values are actual null and display as null. Zero and false are preserved. A Source column identifies each row. Rows are appended, not deduplicated; the same account in two sources remains two rows. Store identifiers with leading zeroes as Excel text or JSON strings.
+Confluence tables need a first header row with at least two named columns and a data row. All qualifying tables on each page are read. Avoid unrelated layout tables on your data pages. Ambiguous headers within a file are rejected so data is not silently overwritten.
 
-This demo does not synchronize the shared team workbook or Jira request status across computers. The build is unsigned, so ask IT to approve and sign it for organization-wide distribution. Follow organization policy if security software blocks it; do not bypass security warnings.
+FILTERS, SEARCH AND COPYING
+Filters are in the left sidebar. Open Choose filter columns to select any combined header. Labels and values come from the current data. Small value lists use clickable buttons; identifiers, sensitive columns and lists over 30 values use text search. Click a selected value again to clear it. Different filters apply together. The null button matches missing values. Your chosen column names are remembered; filter values are not.
+Smart search stays in the table card. It searches combined rows locally and supports existing request wording, common spelling corrections and column-specific queries. No LLM is connected. Clearing search and filters are separate actions.
+Select visible text and use Ctrl+C, or use the copy button on a table cell. Successful copying displays Copied. Passwords remain visible on one line as requested.
+
+REFRESH AND STORAGE
+Confluence refreshes every five minutes after sign-in. Each unavailable page retains its encrypted last successful copy; other pages can still refresh. A confirmed permission denial clears that page's data. Sign out & clear copies clears downloaded data while retaining page links. Switching authenticated accounts clears the previous account's data. Uploaded JSON/Excel files remain only for the current app session; upload them again after restart. They are not sent to Confluence or an AI service. Removing a page removes its saved copy.
+
+TEST FILES
+Open the Test files folder and follow TEST-INSTRUCTIONS.txt. The synthetic Excel and JSON files together produce 8 rows and 13 columns when no Confluence rows have downloaded.
+Live organization sign-in and page permissions must be checked with your own authorized account. This ZIP is for Windows x64; it does not run on macOS.

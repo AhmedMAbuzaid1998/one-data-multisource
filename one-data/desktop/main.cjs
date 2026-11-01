@@ -50,7 +50,11 @@ async function start() {
     }
     callback({ requestHeaders: details.requestHeaders })
   })
-  appSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false))
+  // Only the local app may write copied text. Clipboard reads remain disallowed.
+  const canCopy = (contents, permission) => contents === mainWindow?.webContents &&
+    permission === 'clipboard-sanitized-write' && contents.getURL().startsWith(`${origin}/`)
+  appSession.setPermissionCheckHandler((contents, permission) => canCopy(contents, permission))
+  appSession.setPermissionRequestHandler((contents, permission, callback) => callback(canCopy(contents, permission)))
 
   mainWindow = new BrowserWindow({
     title: 'One Data · Confluence Test',
@@ -62,6 +66,7 @@ async function start() {
     show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
+      additionalArguments: require('./package.json').startupMode === 'manual' ? ['--one-data-manual-login'] : [],
       partition: 'persist:one-data',
       nodeIntegration: false,
       contextIsolation: true,

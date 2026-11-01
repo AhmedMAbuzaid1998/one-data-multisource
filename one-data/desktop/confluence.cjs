@@ -1,7 +1,9 @@
 const { BrowserWindow, session, ipcMain, safeStorage, app } = require('electron')
 const fs = require('node:fs')
 const path = require('node:path')
-const { ConfluenceService, ORIGIN, PAGE_URL, REFRESH_MS } = require('./confluence-service.cjs')
+const { ORIGIN, PAGE_URL, REFRESH_MS } = require('./confluence-service.cjs')
+
+const { ConfluenceHub } = require('./confluence-hub.cjs')
 
 async function attachConfluence(mainWindow, appOrigin) {
   // An in-memory session: each teammate signs in themselves; no login cookies are shipped or saved.
@@ -52,7 +54,7 @@ async function attachConfluence(mainWindow, appOrigin) {
       throw new Error('Could not reach Confluence. Check your network or organization VPN.')
     } finally { clearTimeout(timeout) }
   }
-  const service = new ConfluenceService({ fetchJson, cache, notify: state => {
+  const service = new ConfluenceHub({ fetchJson, cache, notify: state => {
     if (!mainWindow.isDestroyed()) mainWindow.webContents.send('confluence:changed', state)
   } })
   await service.initialize()
@@ -62,6 +64,9 @@ async function attachConfluence(mainWindow, appOrigin) {
   const handle = (name, action) => ipcMain.handle(`confluence:${name}`, (event, ...args) => {
     if (!allowedSender(event) || args.length) throw new Error('Unsupported desktop request.')
     return action()
+  })
+  for (const [name, action] of [['add-page', value => service.addPage(value)], ['remove-page', value => service.removePage(value)]]) ipcMain.handle(`confluence:${name}`, (event, value, ...rest) => {
+    if (!allowedSender(event) || typeof value !== 'string' || rest.length) throw new Error('Unsupported desktop request.'); return action(value)
   })
   handle('state', () => service.snapshot())
   handle('refresh', () => service.refresh())
@@ -83,11 +88,11 @@ async function attachConfluence(mainWindow, appOrigin) {
       if (!loginWindow || loginWindow.isDestroyed()) return
       if (new URL(loginWindow.webContents.getURL()).origin !== ORIGIN) return
       const result = await service.refresh()
-      if (result.status === 'live' && loginWindow && !loginWindow.isDestroyed()) loginWindow.close()
+      if (result.sources.some(source => source.status === 'live') && loginWindow && !loginWindow.isDestroyed()) loginWindow.close()
     })
     loginWindow.on('closed', () => { loginWindow = null; service.publish({ loginOpen: false }) })
     service.publish({ loginOpen: true })
-    loginWindow.loadURL(PAGE_URL).catch(() => service.publish({ status: service.state.rows.length ? 'cached' : 'error', message: 'The sign-in page could not load. Check your network or organization VPN.' }))
+    loginWindow.loadURL(service.snapshot().sources[0]?.pageUrl || PAGE_URL).catch(() => service.publish({ status: service.state.rows.length ? 'cached' : 'error', message: 'The sign-in page could not load. Check your network or organization VPN.' }))
     return service.snapshot()
   })
   handle('use-offline', () => {

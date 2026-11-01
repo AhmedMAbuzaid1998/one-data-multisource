@@ -1,4 +1,11 @@
 /.idea/
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+**/confluence-cache.enc*
+*.log
 /outputs/
 /target/
 one-data/desktop/build/
@@ -6,3 +13,11 @@ one-data/desktop/release/
 one-data/desktop/release-confluence/
 one-data/desktop/release-confluence-login/
 **/vite.config.ts.timestamp-*.mjs
+
+one-data/desktop/release-flexible-*/
+
+one-data/desktop/release-manual5/
+
+one-data/desktop/release-manual6/
+
+one-data/desktop/release-multisource1/

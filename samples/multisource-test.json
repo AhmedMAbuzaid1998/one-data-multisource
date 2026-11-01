@@ -1,0 +1,26 @@
+[
+  {
+    "Username": "demo-json-01",
+    "Country": "PT",
+    "Environment": "QA",
+    "Offer": "Pega upgrade",
+    "Balance": 0,
+    "Upgrade eligible": true
+  },
+  {
+    "Username": "00070001",
+    "Country": "AL",
+    "Environment": "QA",
+    "Offer": "Retention",
+    "Balance": 12.5,
+    "Upgrade eligible": false
+  },
+  {
+    "Username": "demo-json-03",
+    "Country": "IE",
+    "Environment": "STAGE",
+    "Offer": null,
+    "Balance": 25,
+    "Upgrade eligible": false
+  }
+]

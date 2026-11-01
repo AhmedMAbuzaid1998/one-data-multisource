@@ -1,0 +1,13 @@
+Synthetic test data only. No real accounts or credentials.
+
+Add multisource-test.xlsx and multisource-test.json together. With no downloaded Confluence rows, expect 8 rows (5 Excel + 3 JSON) and 13 columns including Source.
+The workbook has two sheets with different headers; both must load.
+MSISDN and Username combine into one column. Market and Country combine. Service becomes the same column as Service type when another source supplies it.
+Missing fields must show null: JSON rows have no Service or Account ID; Mobile users have no Environment, Role, Offer or Balance; Business users have no Market.
+Leading zeroes in 00070001 must remain. That identifier appears in two sources and intentionally remains two rows.
+Balance 0 and Upgrade eligible false must remain visible and must not turn into null.
+Open Choose filter columns and select Offer, Environment or Upgrade eligible. The names must match imported headers. Filter Offer by null to find rows without an offer.
+Click a cell's copy button and look for Copied. Paste into a text editor to verify the value.
+Remove the JSON source: 5 rows remain and JSON-only Offer/Balance columns disappear. Re-add it: 8 rows return.
+Add authorized Confluence page links to test combining live pages with these files. Each page has its own status and refresh time.
+Files are held only during the app session; upload them again after restarting.
